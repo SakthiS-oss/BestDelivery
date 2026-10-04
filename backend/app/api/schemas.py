@@ -1,9 +1,11 @@
 """Request and response bodies for the route planner API."""
 
 from datetime import date, datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from explain import RouteExplanation
 from scoring import RankedRoutes
 
 PLAN_EXAMPLE = {
@@ -71,9 +73,12 @@ class PlanRequest(BaseModel):
 
 
 class PlanResponse(RankedRoutes):
-    """Ranked routes. ``routes`` is ordered by total score. ``warnings`` lists omitted sources."""
+    """Ranked routes, grounded explanations, and any omitted sources."""
 
     warnings: list[str] = Field(default_factory=list)
+    explanations: list[RouteExplanation] = Field(default_factory=list)
+    recommendation: str = ""
+    explanation_source: Literal["model", "template"] = "template"
 
 
 class CityOption(BaseModel):

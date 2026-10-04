@@ -22,6 +22,8 @@ export type CityRisk = {
   hazard_risk: number;
   news_risk: number;
   factors: RiskFactor[];
+  events: string[];
+  headlines: string[];
 };
 
 export type EdgeRisk = {
@@ -33,6 +35,7 @@ export type EdgeRisk = {
   news_risk: number;
   delay_hours: number;
   factors: RiskFactor[];
+  events: string[];
 };
 
 export type RouteResult = {
@@ -68,6 +71,11 @@ export type PlanRequest = {
   as_of_date?: string;
 };
 
+export type RouteExplanation = {
+  id: string;
+  explanation: string;
+};
+
 export type PlanResponse = {
   as_of: string;
   deadline_hours: number;
@@ -75,6 +83,9 @@ export type PlanResponse = {
   baseline: RouteResult;
   routes: RouteResult[];
   warnings: string[];
+  explanations: RouteExplanation[];
+  recommendation: string;
+  explanation_source: "model" | "template";
 };
 
 export type CityOption = {

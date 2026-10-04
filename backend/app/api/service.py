@@ -11,6 +11,7 @@ import httpx
 import hazards
 import news
 import scoring
+from explain import explain_routes
 from app.api.schemas import CityOption, CityRiskResponse, HealthResponse, PlanRequest, PlanResponse
 from app.domain.models import City
 from app.routing.cities import load_cities, resolve_city
@@ -106,6 +107,12 @@ def build_plan(request: PlanRequest) -> PlanResponse:
         deadline_hours,
         warnings,
     )
+    explained = explain_routes([ranked.baseline, *ranked.routes])
+    if explained.source == "template" and not use_mock_data():
+        _warn(
+            warnings,
+            "Explanation used the local template because the model output was not grounded.",
+        )
     return PlanResponse(
         as_of=ranked.as_of,
         deadline_hours=ranked.deadline_hours,
@@ -113,6 +120,9 @@ def build_plan(request: PlanRequest) -> PlanResponse:
         baseline=ranked.baseline,
         routes=ranked.routes,
         warnings=warnings,
+        explanations=explained.routes,
+        recommendation=explained.recommendation,
+        explanation_source=explained.source,
     )
 
 

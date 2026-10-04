@@ -60,6 +60,9 @@ def test_plan_ranks_dallas_to_atlanta() -> None:
     assert body["routes"]
     assert body["routes"][0]["id"] == "route-1"
     assert body["baseline"]["id"] == "baseline"
+    assert body["explanation_source"] == "template"
+    assert body["recommendation"]
+    assert {item["id"] for item in body["explanations"]} >= {"baseline", "route-1"}
     assert [city["name"] for city in body["baseline"]["cities"]][0] == "Dallas"
 
 

@@ -43,6 +43,8 @@ class CityRisk(BaseModel):
     hazard_risk: float
     news_risk: float
     factors: list[RiskFactor]
+    events: list[str] = Field(default_factory=list)
+    headlines: list[str] = Field(default_factory=list)
 
 
 class EdgeRisk(BaseModel):
@@ -56,6 +58,7 @@ class EdgeRisk(BaseModel):
     news_risk: float
     delay_hours: float
     factors: list[RiskFactor]
+    events: list[str] = Field(default_factory=list)
 
 
 class RouteResult(BaseModel):
@@ -194,6 +197,8 @@ class _RiskContext:
             hazard_risk=float(hazard["score"]),
             news_risk=float(news["score"]),
             factors=_factors(hazard["factors"]) + _factors(news["factors"]),
+            events=_labels(hazard.get("events"), "event_name", "event_type"),
+            headlines=_labels(news.get("articles"), "headline"),
         )
         self._cities[city_id] = record
         return record
@@ -226,6 +231,7 @@ class _RiskContext:
             delay_hours=delay_hours_for_risk(hazard_risk, news_risk, self.weights),
             factors=_factors(hazard["factors"])
             + [RiskFactor(name="news_risk", value=news_risk, unit="0-1")],
+            events=_labels(hazard.get("events"), "event_name", "event_type"),
         )
         self._edges[(hop.origin_id, hop.dest_id)] = record
         self._edges[(hop.dest_id, hop.origin_id)] = record
@@ -292,6 +298,27 @@ def _weights(overrides: dict[str, float] | None) -> dict[str, float]:
     if chosen["drive"] < 0 or chosen["hazard"] < 0 or chosen["news"] < 0:
         raise ValueError("weights must be non-negative")
     return chosen
+
+
+def _labels(raw: object, *keys: str) -> list[str]:
+    """Copy the first present text field from each event or article."""
+    if not isinstance(raw, list):
+        return []
+    labels: list[str] = []
+    seen: set[str] = set()
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        label = ""
+        for key in keys:
+            value = item.get(key)
+            if isinstance(value, str) and value.strip():
+                label = value.strip()
+                break
+        if label and label.casefold() not in seen:
+            seen.add(label.casefold())
+            labels.append(label)
+    return labels
 
 
 def _factors(raw: object) -> list[RiskFactor]:
