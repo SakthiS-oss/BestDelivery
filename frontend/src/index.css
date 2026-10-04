@@ -1,3 +1,39 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #09090b;
+  color: #f4f4f5;
+}
+
+.leaflet-container {
+  background: #09090b;
+  font: inherit;
+  height: 100%;
+  width: 100%;
+}
+
+.leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.95);
+}
+
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: #18181b;
+  color: #f4f4f5;
+  box-shadow: none;
+}
+
+.leaflet-tooltip {
+  background: #18181b;
+  color: #f4f4f5;
+  border: 1px solid #3f3f46;
+  border-radius: 6px;
+}

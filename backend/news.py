@@ -457,7 +457,7 @@ def _ollama_generate(prompt: str) -> str:
     response = httpx.post(
         f"{base}/api/generate",
         json=ollama_request_body(prompt, model),
-        timeout=120,
+        timeout=httpx.Timeout(120.0, connect=3.0),
     )
     response.raise_for_status()
     payload = response.json()

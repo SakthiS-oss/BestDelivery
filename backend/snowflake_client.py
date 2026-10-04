@@ -71,6 +71,8 @@ def connect() -> object:
         database=cfg["database"] or None,
         schema=cfg["schema"] or None,
         role=cfg["role"] or None,
+        login_timeout=8,
+        network_timeout=15,
     )
 
 

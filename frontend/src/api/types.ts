@@ -1,11 +1,4 @@
-/** Wire types for POST /api/plan. Field names match the JSON body. */
-
-export type FactorName =
-  | "hazard_risk"
-  | "news_risk"
-  | "delay_hours"
-  | "travel_hours"
-  | "deadline_slack_hours";
+/** Wire types for the planner API. Field names match the JSON bodies. */
 
 export type City = {
   id: string;
@@ -15,67 +8,128 @@ export type City = {
   lon: number;
 };
 
-export type Hop = {
-  origin_id: string;
-  dest_id: string;
-  road_miles: number;
-  drive_hours: number;
-};
-
-export type Route = {
-  id: string;
-  city_ids: string[];
-  hops: Hop[];
-  total_miles: number;
-  travel_hours: number;
-};
-
-export type Factor = {
-  name: FactorName;
+export type RiskFactor = {
+  name: string;
   value: number;
   unit: string;
-  evidence_ids: string[];
+  event_id?: string | null;
 };
 
-export type RouteScore = {
-  factors: Factor[];
-  travel_cost_hours: number;
-  risk_cost_hours: number;
-  total_cost_hours: number;
-  eta: string;
+export type CityRisk = {
+  city_id: string;
+  name: string;
+  state: string;
+  hazard_risk: number;
+  news_risk: number;
+  factors: RiskFactor[];
+};
+
+export type EdgeRisk = {
+  origin_id: string;
+  dest_id: string;
+  drive_hours: number;
+  road_miles: number;
+  hazard_risk: number;
+  news_risk: number;
+  delay_hours: number;
+  factors: RiskFactor[];
+};
+
+export type RouteResult = {
+  id: string;
+  cities: City[];
+  city_risks: CityRisk[];
+  edge_risks: EdgeRisk[];
+  drive_hours: number;
+  hazard_risk_max: number;
+  hazard_risk_avg: number;
+  news_risk_max: number;
+  news_risk_avg: number;
+  delay_hours_estimate: number;
+  total_hours: number;
+  total_score: number;
   meets_deadline: boolean;
+  deadline_margin_hours: number;
+  extra_drive_hours: number;
+  avoided_cities: string[];
+  note: string;
 };
 
-export type Citation = {
-  source: "distance" | "disaster" | "news" | "score";
-  record_id: string;
-  field: string;
-  value: string;
-};
-
-export type ExplainedRoute = {
-  route: Route;
-  score: RouteScore;
-  explanation: string;
-  citations: Citation[];
+export type PlanWeights = {
+  drive: number;
+  hazard: number;
+  news: number;
 };
 
 export type PlanRequest = {
-  start_city: string;
-  end_city: string;
-  deadline_at: string | null;
-  deadline_days: number | null;
-  as_of: string;
+  start: string;
+  end: string;
+  deadline: string;
+  as_of_date?: string;
 };
 
 export type PlanResponse = {
   as_of: string;
-  deadline_at: string;
-  routes: ExplainedRoute[];
+  deadline_hours: number;
+  weights: PlanWeights;
+  baseline: RouteResult;
+  routes: RouteResult[];
+  warnings: string[];
+};
+
+export type CityOption = {
+  id: string;
+  name: string;
+  state: string;
+  label: string;
+  lat: number;
+  lon: number;
+};
+
+export type HazardEvent = {
+  event_id: string;
+  event_name?: string;
+  event_type?: string;
+  lat?: number;
+  lon?: number;
+  alert_level?: string;
+  severity?: number;
+  contribution?: number;
+  city?: string;
+};
+
+export type NewsArticle = {
+  id: string;
+  headline: string;
+  date: string;
+  event_type?: string;
+  severity?: number;
+};
+
+export type CityRiskDetail = {
+  city: CityOption;
+  as_of_date: string;
+  hazard: {
+    score: number;
+    factors: RiskFactor[];
+    events: HazardEvent[];
+  };
+  news: {
+    score: number;
+    factors: RiskFactor[];
+    articles: NewsArticle[];
+    trend?: {
+      direction: string;
+      current_road_events: number;
+      prior_road_events: number;
+    };
+  };
+  warnings: string[];
 };
 
 export type HealthResponse = {
   status: string;
   use_mock_data: boolean;
   snowflake: string;
+  ollama: string;
 };

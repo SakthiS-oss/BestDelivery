@@ -101,7 +101,11 @@ def test_health_skips_snowflake_in_mock_mode() -> None:
     assert report == {"status": "ok", "use_mock_data": True, "snowflake": "skipped"}
     response = TestClient(app).get("/api/health")
     assert response.status_code == 200
-    assert response.json() == report
+    body = response.json()
+    assert body["status"] == report["status"]
+    assert body["use_mock_data"] is True
+    assert body["snowflake"] == "skipped"
+    assert body["ollama"] == "skipped"
 
 
 def test_health_reports_unavailable_without_credentials(monkeypatch: pytest.MonkeyPatch) -> None:
