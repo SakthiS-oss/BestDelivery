@@ -26,7 +26,8 @@ class PlanResponse(BaseModel):
 
 
 class HealthResponse(BaseModel):
-    """Process liveness and the mock-data switch."""
+    """Process liveness, the mock-data switch, and Snowflake connectivity."""
 
     status: str
     use_mock_data: bool
+    snowflake: str = "unknown"

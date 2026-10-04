@@ -77,4 +77,5 @@ export type PlanResponse = {
 export type HealthResponse = {
   status: string;
   use_mock_data: boolean;
+  snowflake: string;
 };
