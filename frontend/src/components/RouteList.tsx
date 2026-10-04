@@ -7,11 +7,21 @@ export type RouteListProps = {
   weights: PlanWeights | null;
   selectedId: string | null;
   compare: boolean;
+  hasPlan: boolean;
   onSelect: (routeId: string) => void;
   onCompare: (value: boolean) => void;
 };
 
-export function RouteList({ routes, baseline, weights, selectedId, compare, onSelect, onCompare }: RouteListProps) {
+export function RouteList({
+  routes,
+  baseline,
+  weights,
+  selectedId,
+  compare,
+  hasPlan,
+  onSelect,
+  onCompare,
+}: RouteListProps) {
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-3">
@@ -28,8 +38,11 @@ export function RouteList({ routes, baseline, weights, selectedId, compare, onSe
         </label>
       </div>
       <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-3">
-        {routes.length === 0 ? (
-          <p className="px-1 text-sm text-zinc-500">Plan a trip to rank routes.</p>
+        {!hasPlan ? (
+          <p className="px-1 text-sm text-zinc-500">Plan a trip to rank routes. The cards show up here.</p>
+        ) : null}
+        {hasPlan && routes.length === 0 ? (
+          <p className="px-1 text-sm text-zinc-500">No proposed route came back for this trip.</p>
         ) : null}
         {compare && baseline ? (
           <RouteCard

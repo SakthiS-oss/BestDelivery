@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { fetchBacktest } from "../api/client";
+import { fetchBacktest, toError } from "../api/client";
 import type { BacktestEvent, BacktestReport, BacktestSample } from "../api/types";
 
 export type BacktestPageProps = {
@@ -22,7 +22,7 @@ export function BacktestPage({ onReplay }: BacktestPageProps) {
       })
       .catch((reason: unknown) => {
         if (!cancelled) {
-          setError(reason instanceof Error ? reason.message : "Could not load the backtest report.");
+          setError(toError(reason).message);
         }
       })
       .finally(() => {
@@ -42,10 +42,26 @@ export function BacktestPage({ onReplay }: BacktestPageProps) {
     return (
       <div className="mx-auto max-w-3xl p-6">
         <h1 className="text-lg font-semibold">Historical replay</h1>
-        <p className="mt-3 text-sm text-red-300">{error ?? "No report."}</p>
+        <p role="alert" className="mt-3 text-sm text-red-300">
+          {error ?? "No report is available."}
+        </p>
         <p className="mt-3 text-sm text-zinc-400">
           From the repo root, run <code className="text-zinc-200">python scripts/backtest.py</code>. The page reads the
           saved report. It does not recompute routes.
+        </p>
+      </div>
+    );
+  }
+
+  const events = Array.isArray(report.events) ? report.events : [];
+  if (events.length === 0) {
+    return (
+      <div className="mx-auto max-w-3xl p-6">
+        <h1 className="text-lg font-semibold">Historical replay</h1>
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-400">{report.disclaimer}</p>
+        <p className="mt-4 text-sm text-zinc-400">
+          This report lists no events. From the repo root, run{" "}
+          <code className="text-zinc-200">python scripts/backtest.py</code> to build one.
         </p>
       </div>
     );
@@ -76,7 +92,7 @@ export function BacktestPage({ onReplay }: BacktestPageProps) {
             </tr>
           </thead>
           <tbody>
-            {report.events.map((event) => (
+            {events.map((event) => (
               <EventRow key={event.event_id} event={event} onReplay={onReplay} />
             ))}
           </tbody>
@@ -107,7 +123,9 @@ function EventRow({ event, onReplay }: { event: BacktestEvent; onReplay: (sample
           >
             Replay
           </button>
-        ) : null}
+        ) : (
+          <span className="text-xs text-zinc-500">No sample</span>
+        )}
       </td>
     </tr>
   );

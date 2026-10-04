@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { fetchCities, fetchCityRisk, fetchHealth, planDelivery } from "./api/client";
+import { fetchCities, fetchCityRisk, fetchHealth, planDelivery, toError } from "./api/client";
 import type {
   BacktestSample,
   City,
@@ -16,10 +16,12 @@ import { CityPanel } from "./components/CityPanel";
 import { RouteForm, type ReplaySeed } from "./components/RouteForm";
 import { RouteList } from "./components/RouteList";
 import { RouteMap } from "./components/RouteMap";
+import { ScoresPanel } from "./components/ScoresPanel";
 import { cityLabel } from "./display";
 
 export function App() {
   const [catalog, setCatalog] = useState<CityOption[]>([]);
+  const [citiesStatus, setCitiesStatus] = useState<"loading" | "ready" | "failed">("loading");
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [bootError, setBootError] = useState<string | null>(null);
   const [plan, setPlan] = useState<PlanResponse | null>(null);
@@ -34,6 +36,8 @@ export function App() {
   const [cityError, setCityError] = useState<string | null>(null);
   const [view, setView] = useState<"planner" | "backtest">("planner");
   const [replay, setReplay] = useState<ReplaySeed | null>(null);
+  const [scoresOpen, setScoresOpen] = useState(false);
+  const [detailNote, setDetailNote] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -44,10 +48,12 @@ export function App() {
         }
         setHealth(healthReport);
         setCatalog(cities);
+        setCitiesStatus("ready");
       })
       .catch((reason: unknown) => {
         if (!cancelled) {
-          setBootError(reason instanceof Error ? reason.message : "The API is unreachable.");
+          setCitiesStatus("failed");
+          setBootError(toError(reason).message);
         }
       });
     return () => {
@@ -58,6 +64,7 @@ export function App() {
   async function onSubmit(request: PlanRequest) {
     setLoading(true);
     setError(null);
+    setDetailNote(null);
     setActiveCityId(null);
     setCityError(null);
     try {
@@ -68,34 +75,38 @@ export function App() {
         cities.map(async (city) => {
           try {
             const detail = await fetchCityRisk(cityLabel(city), asOf);
-            return [city.id, detail] as const;
+            return { id: city.id, label: cityLabel(city), detail };
           } catch {
-            return null;
+            return { id: city.id, label: cityLabel(city), detail: null };
           }
         }),
       );
       const nextRisk: Record<string, CityRiskDetail> = {};
       const events: HazardEvent[] = [];
       const seen = new Set<string>();
+      const missed: string[] = [];
       for (const row of loaded) {
-        if (!row) {
+        if (!row.detail) {
+          missed.push(row.label);
           continue;
         }
-        const [cityId, detail] = row;
-        nextRisk[cityId] = detail;
-        for (const event of detail.hazard.events ?? []) {
+        nextRisk[row.id] = row.detail;
+        for (const event of row.detail.hazard.events ?? []) {
           if (!seen.has(event.event_id)) {
             seen.add(event.event_id);
             events.push(event);
           }
         }
       }
+      setDetailNote(
+        missed.length > 0 ? `Risk details were not loaded for ${missed.join(", ")}. The routes are still shown.` : null,
+      );
       setPlan(result);
       setSelectedId(result.routes[0]?.id ?? result.baseline.id);
       setHazards(events);
       setRiskByCity(nextRisk);
     } catch (reason: unknown) {
-      setError(reason instanceof Error ? reason.message : "Planning failed.");
+      setError(toError(reason).message);
     } finally {
       setLoading(false);
     }
@@ -114,7 +125,7 @@ export function App() {
         setRiskByCity((current) => ({ ...current, [city.id]: detail }));
       })
       .catch((reason: unknown) => {
-        setCityError(reason instanceof Error ? reason.message : "Could not load city risk.");
+        setCityError(toError(reason).message);
       })
       .finally(() => setCityLoading(false));
   }
@@ -135,19 +146,31 @@ export function App() {
   const warnings = plan?.warnings ?? [];
 
   return (
-    <div className="flex h-screen flex-col bg-zinc-950 text-zinc-100">
+    <div className="relative flex h-screen flex-col bg-zinc-950 text-zinc-100">
+      {!health && !bootError ? (
+        <div className="border-b border-zinc-800 px-4 py-2 text-sm text-zinc-400">Connecting to the API…</div>
+      ) : null}
       {health?.use_mock_data ? (
         <div className="border-b border-amber-900 bg-amber-950 px-4 py-2 text-sm text-amber-200">
           Mock data is on. Hazards and news come from local files.
         </div>
       ) : null}
+      {health && !health.use_mock_data && (health.snowflake === "unavailable" || health.ollama === "unavailable") ? (
+        <div className="border-b border-amber-900 bg-amber-950 px-4 py-2 text-sm text-amber-200">
+          Snowflake is {health.snowflake}. Ollama is {health.ollama}. A plan can still come back, with those scores left
+          out.
+        </div>
+      ) : null}
       {bootError ? (
-        <div className="border-b border-red-900 bg-red-950 px-4 py-2 text-sm text-red-200">
-          {bootError}. Start the API on port 8000.
+        <div role="alert" className="border-b border-red-900 bg-red-950 px-4 py-2 text-sm text-red-200">
+          {bootError}
         </div>
       ) : null}
       {warnings.length > 0 ? (
         <div className="border-b border-amber-900 bg-amber-950/70 px-4 py-2 text-sm text-amber-100">{warnings.join(" ")}</div>
+      ) : null}
+      {detailNote ? (
+        <div className="border-b border-amber-900 bg-amber-950/70 px-4 py-2 text-sm text-amber-100">{detailNote}</div>
       ) : null}
       <div className="flex gap-2 border-b border-zinc-800 px-4 py-2 text-sm">
         <ViewButton active={view === "planner"} onClick={() => setView("planner")}>
@@ -156,13 +179,23 @@ export function App() {
         <ViewButton active={view === "backtest"} onClick={() => setView("backtest")}>
           Backtest
         </ViewButton>
+        <ViewButton active={scoresOpen} onClick={() => setScoresOpen((open) => !open)}>
+          How scores work
+        </ViewButton>
       </div>
       {view === "backtest" ? (
         <BacktestPage onReplay={onReplay} />
       ) : (
       <div className="grid min-h-0 flex-1 grid-cols-1 min-[800px]:grid-cols-[240px_minmax(0,1fr)_260px]">
         <aside className="overflow-y-auto border-zinc-800 min-[800px]:border-r">
-          <RouteForm cities={catalog} loading={loading} error={error} replay={replay} onSubmit={onSubmit} />
+          <RouteForm
+            cities={catalog}
+            citiesStatus={citiesStatus}
+            loading={loading}
+            error={error}
+            replay={replay}
+            onSubmit={onSubmit}
+          />
         </aside>
         <section className="relative min-h-[560px] min-[800px]:min-h-0">
           <RouteMap
@@ -191,12 +224,14 @@ export function App() {
             weights={plan?.weights ?? null}
             selectedId={selectedId}
             compare={compare}
+            hasPlan={plan !== null}
             onSelect={setSelectedId}
             onCompare={setCompare}
           />
         </aside>
       </div>
       )}
+      {scoresOpen ? <ScoresPanel weights={plan?.weights ?? null} onClose={() => setScoresOpen(false)} /> : null}
     </div>
   );
 }

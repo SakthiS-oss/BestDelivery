@@ -26,8 +26,14 @@ HAZARD_WARNING = "Snowflake is unavailable; hazard scores were omitted."
 NEWS_WARNING = "News data is unavailable; news scores were omitted."
 OLLAMA_WARNING = "Ollama is unavailable; uncached news was left unclassified."
 
+
+class CatalogError(RuntimeError):
+    """The local city or road file cannot be used."""
+
+
 _catalog: tuple[list[City], list] | None = None
 _plan_lock = threading.Lock()
+_CATALOG_HINT = "From the repo root, run: python scripts/seed_demo.py"
 
 
 def request_timeout_seconds() -> float:
@@ -48,8 +54,13 @@ def load_catalog() -> tuple[list[City], list]:
     """Load the city list and road hops once per process."""
     global _catalog
     if _catalog is None:
-        cities = load_cities(REPO_ROOT / "data" / "cities.csv")
-        edges = load_edges(REPO_ROOT / "data" / "edges.csv", cities)
+        try:
+            cities = load_cities(REPO_ROOT / "data" / "cities.csv")
+            edges = load_edges(REPO_ROOT / "data" / "edges.csv", cities)
+        except (OSError, ValueError) as exc:
+            raise CatalogError(f"City catalog is unavailable. {_CATALOG_HINT}") from exc
+        if not cities or not edges:
+            raise CatalogError(f"The city catalog is empty. {_CATALOG_HINT}")
         _catalog = (cities, edges)
     return _catalog
 

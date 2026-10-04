@@ -124,6 +124,13 @@ def test_backtest_endpoint_reads_the_saved_report(monkeypatch: pytest.MonkeyPatc
     assert found.status_code == 200
     assert found.json()["routes_avoided"] == 1
 
+    broken = tmp_path / "broken.json"
+    broken.write_text("{", encoding="utf-8")
+    monkeypatch.setattr("backtest.REPORT_PATH", broken)
+    invalid = TestClient(app).get("/backtest")
+    assert invalid.status_code == 500
+    assert "not valid JSON" in invalid.json()["detail"]
+
 
 def test_route_avoided_requires_the_baseline_to_have_entered_the_city() -> None:
     affected = {"houston-tx"}

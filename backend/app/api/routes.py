@@ -14,7 +14,7 @@ from app.api.schemas import (
     PlanRequest,
     PlanResponse,
 )
-from app.api.service import build_city_risk, build_health, build_plan, list_city_options
+from app.api.service import CatalogError, build_city_risk, build_health, build_plan, list_city_options
 
 router = APIRouter()
 
@@ -35,12 +35,20 @@ def backtest() -> dict[str, object]:
             status_code=404,
             detail="No backtest report yet. From the repo root, run: python scripts/backtest.py",
         ) from None
+    except ValueError:
+        raise HTTPException(
+            status_code=500,
+            detail="The saved backtest report is not valid JSON. From the repo root, run: python scripts/backtest.py",
+        ) from None
 
 
 @router.get("/cities", response_model=list[CityOption])
 def cities() -> list[CityOption]:
     """Supported cities. Send ``label`` back as ``start`` or ``end`` on POST /plan."""
-    return list_city_options()
+    try:
+        return list_city_options()
+    except CatalogError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
 
 
 @router.get("/city/{name}/risk", response_model=CityRiskResponse)
@@ -54,6 +62,8 @@ def city_risk(
     """Hazard events and news for one city. An unknown city is HTTP 400."""
     try:
         return build_city_risk(name, as_of_date)
+    except CatalogError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -83,5 +93,7 @@ def plan(
     """Rank candidate routes. A down Snowflake or Ollama yields partial scores and ``warnings``."""
     try:
         return build_plan(body)
+    except CatalogError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

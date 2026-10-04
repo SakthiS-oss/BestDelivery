@@ -21,7 +21,11 @@ export function CityPanel({ detail, loading, error, onClose }: CityPanelProps) {
         </button>
       </div>
       {loading ? <p className="mt-2 text-sm text-zinc-400">Loading risk…</p> : null}
-      {error ? <p className="mt-2 text-sm text-red-300">{error}</p> : null}
+      {error ? (
+        <p role="alert" className="mt-2 text-sm text-red-300">
+          {error}
+        </p>
+      ) : null}
       {detail ? <Detail detail={detail} /> : null}
     </section>
   );

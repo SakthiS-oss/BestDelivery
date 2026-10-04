@@ -45,25 +45,56 @@ export async function fetchCityRisk(name: string, asOf?: string): Promise<CityRi
   return getJson<CityRiskDetail>(path);
 }
 
+export function toError(reason: unknown): Error {
+  if (reason instanceof ApiError) {
+    return reason;
+  }
+  if (reason instanceof DOMException && (reason.name === "TimeoutError" || reason.name === "AbortError")) {
+    return new Error("The request timed out.");
+  }
+  if (reason instanceof TypeError) {
+    return new Error("The API is unreachable. Start it on port 8000.");
+  }
+  if (reason instanceof Error) {
+    return reason;
+  }
+  return new Error("Something went wrong.");
+}
+
 export async function planDelivery(request: PlanRequest): Promise<PlanResponse> {
-  const response = await fetch(`${apiBaseUrl()}/plan`, {
+  const response = await send("/plan", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(request),
     signal: AbortSignal.timeout(60_000),
   });
-  if (!response.ok) {
-    throw await readError(response);
-  }
-  return response.json() as Promise<PlanResponse>;
+  return readJson<PlanResponse>(response);
 }
 
 async function getJson<T>(path: string): Promise<T> {
-  const response = await fetch(`${apiBaseUrl()}${path}`, { signal: AbortSignal.timeout(20_000) });
+  const response = await send(path, { signal: AbortSignal.timeout(20_000) });
+  return readJson<T>(response);
+}
+
+async function send(path: string, init: RequestInit): Promise<Response> {
+  let response: Response;
+  try {
+    response = await fetch(`${apiBaseUrl()}${path}`, init);
+  } catch (reason) {
+    throw toError(reason);
+  }
   if (!response.ok) {
     throw await readError(response);
   }
-  return response.json() as Promise<T>;
+  return response;
+}
+
+async function readJson<T>(response: Response): Promise<T> {
+  try {
+    return (await response.json()) as T;
+  } catch {
+    throw new ApiError("The API returned a response that was not JSON.", response.status);
+  }
 }
 
 async function readError(response: Response): Promise<ApiError> {

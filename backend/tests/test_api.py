@@ -110,6 +110,18 @@ def test_localhost_frontend_is_allowed() -> None:
     assert "access-control-allow-origin" not in blocked.headers
 
 
+def test_missing_catalog_is_503(monkeypatch: pytest.MonkeyPatch) -> None:
+    from app.api.service import CatalogError
+
+    def boom() -> list[object]:
+        raise CatalogError("City catalog is unavailable. From the repo root, run: python scripts/seed_demo.py")
+
+    monkeypatch.setattr("app.api.routes.list_city_options", boom)
+    response = client.get("/cities")
+    assert response.status_code == 503
+    assert "seed_demo.py" in response.json()["detail"]
+
+
 def test_request_timeout_returns_504() -> None:
     app_with_timeout = FastAPI()
 

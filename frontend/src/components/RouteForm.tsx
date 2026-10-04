@@ -13,13 +13,14 @@ export type ReplaySeed = {
 
 export type RouteFormProps = {
   cities: CityOption[];
+  citiesStatus: "loading" | "ready" | "failed";
   loading: boolean;
   error: string | null;
   replay: ReplaySeed | null;
   onSubmit: (request: PlanRequest) => void;
 };
 
-export function RouteForm({ cities, loading, error, replay, onSubmit }: RouteFormProps) {
+export function RouteForm({ cities, citiesStatus, loading, error, replay, onSubmit }: RouteFormProps) {
   const [start, setStart] = useState("Dallas, TX");
   const [end, setEnd] = useState("Atlanta, GA");
   const [deadline, setDeadline] = useState(() => dateInputValue(4));
@@ -73,8 +74,8 @@ export function RouteForm({ cities, loading, error, replay, onSubmit }: RouteFor
         <h1 className="text-lg font-semibold tracking-tight">Chokepoint</h1>
         <p className="mt-1 text-sm text-zinc-400">Rank truck routes by drive time, hazards, and news.</p>
       </div>
-      <CityField label="Start" value={start} cities={cities} onChange={setStart} />
-      <CityField label="End" value={end} cities={cities} onChange={setEnd} />
+      <CityField label="Start" value={start} cities={cities} citiesStatus={citiesStatus} onChange={setStart} />
+      <CityField label="End" value={end} cities={cities} citiesStatus={citiesStatus} onChange={setEnd} />
       <label className="flex flex-col gap-1 text-sm">
         <span className="text-zinc-400">Deadline</span>
         <input
@@ -102,7 +103,19 @@ export function RouteForm({ cities, loading, error, replay, onSubmit }: RouteFor
       >
         {loading ? "Planning…" : "Plan routes"}
       </button>
-      {message ? <p className="text-sm text-red-300">{message}</p> : null}
+      {citiesStatus === "loading" ? <p className="text-sm text-zinc-500">Loading cities…</p> : null}
+      {citiesStatus !== "loading" && cities.length === 0 ? (
+        <p className="text-sm text-zinc-500">
+          {citiesStatus === "failed"
+            ? "The city list did not load. Start the API, then refresh this page."
+            : "The city catalog is empty. From the repo root, run python scripts/seed_demo.py."}
+        </p>
+      ) : null}
+      {message ? (
+        <p role="alert" className="text-sm text-red-300">
+          {message}
+        </p>
+      ) : null}
     </form>
   );
 }
@@ -111,11 +124,13 @@ function CityField({
   label,
   value,
   cities,
+  citiesStatus,
   onChange,
 }: {
   label: string;
   value: string;
   cities: CityOption[];
+  citiesStatus: "loading" | "ready" | "failed";
   onChange: (value: string) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -165,6 +180,15 @@ function CityField({
             </li>
           ))}
         </ul>
+      ) : null}
+      {open && matches.length === 0 ? (
+        <p className="absolute top-full z-20 mt-1 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-400 shadow-lg">
+          {citiesStatus === "loading"
+            ? "Loading cities…"
+            : cities.length === 0
+              ? "The city list is empty."
+              : "No cities match that name."}
+        </p>
       ) : null}
     </div>
   );

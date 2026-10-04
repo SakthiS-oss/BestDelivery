@@ -49,6 +49,13 @@ export function RouteMap({ routes, baseline, selectedId, compare, hazards, loadi
         <Legend swatch="#fbbf24" label="Mid" />
         <Legend swatch="#f87171" label="High" />
       </div>
+      {!loading && routes.length === 0 ? (
+        <div className="pointer-events-none absolute inset-0 z-[500] flex items-center justify-center p-6">
+          <p className="max-w-xs rounded-md border border-zinc-700 bg-zinc-950/90 px-4 py-3 text-center text-sm text-zinc-300">
+            Plan a route to draw it on the map.
+          </p>
+        </div>
+      ) : null}
       {loading ? (
         <div className="absolute inset-0 z-[1000] flex items-center justify-center bg-zinc-950/60 text-sm text-zinc-100">
           Scoring routes…
