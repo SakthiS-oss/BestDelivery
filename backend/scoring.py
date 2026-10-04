@@ -1,9 +1,9 @@
 """Score candidate routes with hazard and news risk, then re-rank them.
 
-Edge weight is ``drive_hours + delay``. Delay is a documented function of the
-segment's hazard and news scores, so a dangerous hop can lose to a longer
-safe hop inside k-shortest paths. The baseline route is the same search with
-every penalty set to zero.
+Candidates are the fastest drive-time paths. Risk is applied only to the
+cities and hops on those paths and the baseline, then the paths are ordered
+by total score. A dangerous hop can lose to a longer safe hop that was
+already a candidate. Delay is ``hazard_weight * hazard_risk + news_weight * news_risk``.
 """
 
 from datetime import datetime
@@ -15,7 +15,7 @@ from app.routing.candidates import k_shortest_routes, total_drive_hours
 from app.routing.edges import edge_index
 from app.scoring.deadline import estimate_itinerary
 from hazards import hazard_risk_for_city, hazard_risk_for_edge
-from news import news_risk_for_city
+from news import news_risk_for_city, news_risks_for_cities
 
 # Hours added when that risk score is 1. ``drive`` scales catalog drive hours.
 DEFAULT_WEIGHTS: dict[str, float] = {
@@ -130,18 +130,27 @@ def plan_routes(
     means the route is late.
     """
     chosen = _weights(weights)
-    context = _RiskContext(cities, edges, as_of, chosen, hazard_lookback_days, news_lookback_days)
     baseline_path = k_shortest_routes(cities, edges, origin, destination, k=1)[0]
-    ranked_paths = k_shortest_routes(
+    candidate_paths = k_shortest_routes(cities, edges, origin, destination, k=k)
+    unique_cities: list[City] = []
+    seen: set[str] = set()
+    for path in (baseline_path, *candidate_paths):
+        for city in path:
+            if city.id not in seen:
+                seen.add(city.id)
+                unique_cities.append(city)
+    news_by_city = news_risks_for_cities(unique_cities, as_of, news_lookback_days)
+    context = _RiskContext(
         cities,
         edges,
-        origin,
-        destination,
-        k=k,
-        risk_penalty=context.penalty,
+        as_of,
+        chosen,
+        hazard_lookback_days,
+        news_lookback_days,
+        news_by_city,
     )
     baseline = context.score("baseline", baseline_path, deadline_hours)
-    proposed = [context.score(f"route-{index}", path, deadline_hours) for index, path in enumerate(ranked_paths, start=1)]
+    proposed = [context.score(f"route-{index}", path, deadline_hours) for index, path in enumerate(candidate_paths, start=1)]
     proposed.sort(key=lambda route: (route.total_score, route.drive_hours, route.id))
     for index, route in enumerate(proposed, start=1):
         route.id = f"route-{index}"
@@ -166,6 +175,7 @@ class _RiskContext:
         weights: dict[str, float],
         hazard_lookback_days: float,
         news_lookback_days: float,
+        news_by_city: dict[str, dict[str, object]] | None = None,
     ) -> None:
         self.cities = {city.id: city for city in cities}
         self.hops = list(edges)
@@ -174,10 +184,9 @@ class _RiskContext:
         self.weights = weights
         self.hazard_lookback_days = hazard_lookback_days
         self.news_lookback_days = news_lookback_days
+        self.news_by_city = news_by_city or {}
         self._cities: dict[str, CityRisk] = {}
         self._edges: dict[tuple[str, str], EdgeRisk] = {}
-        for hop in edges:
-            self.edge_risk(hop.origin_id, hop.dest_id)
 
     def penalty(self, origin_id: str, dest_id: str) -> float:
         """Risk penalty in hours for the edge-cost function."""
@@ -189,7 +198,9 @@ class _RiskContext:
             return cached
         city = self.cities[city_id]
         hazard = hazard_risk_for_city(city, self.as_of, self.hazard_lookback_days)
-        news = news_risk_for_city(city, self.as_of, self.news_lookback_days)
+        news = self.news_by_city.get(city_id)
+        if news is None:
+            news = news_risk_for_city(city, self.as_of, self.news_lookback_days)
         record = CityRisk(
             city_id=city.id,
             name=city.name,

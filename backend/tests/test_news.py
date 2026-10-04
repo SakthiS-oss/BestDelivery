@@ -32,13 +32,12 @@ def isolated(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
     monkeypatch.setenv("NEWS_CACHE_PATH", str(tmp_path / "news.sqlite"))
 
 
-def test_city_and_state_match_inside_the_window() -> None:
+def test_headline_match_inside_the_window() -> None:
     articles = get_news_for_city(CHICAGO, AS_OF, 7)
     assert {article["id"] for article in articles} == {
         "chi-road",
         "chi-bridge",
         "chi-sports",
-        "state-storm",
     }
     for article in articles:
         assert set(article) == {"id", "headline", "date"}
@@ -46,14 +45,14 @@ def test_city_and_state_match_inside_the_window() -> None:
 
 
 def test_news_sql_filters_in_sql_and_does_not_return_text() -> None:
-    sql = news_match_sql(
-        "BBCGOOGLECNN_NEWS_LISTING.PUBLIC.BBC_NEWS",
-        include_state=True,
-    )
+    sql = news_match_sql("BBCGOOGLECNN_NEWS_LISTING.PUBLIC.BBC_NEWS", 2)
     assert_select_only(sql)
     assert sql.strip().startswith("SELECT id, headline, published_at")
-    assert "CONTENT ILIKE %(city_like)s" in sql
-    assert "%(state_like)s" in sql
+    assert "DATEADD(month, %(scan_months)s, %(as_of)s)" in sql
+    assert "headline ILIKE %(city_0)s" in sql
+    assert "headline ILIKE %(city_1)s" in sql
+    assert "ESCAPE '\\\\'" in sql
+    assert "CONTENT" not in sql
     assert "Chicago" not in sql
     assert like_contains("100%_Chicago") == "%100\\%\\_Chicago%"
 
@@ -65,16 +64,17 @@ def test_mock_risk_score_trend_and_no_article_text(monkeypatch: pytest.MonkeyPat
     monkeypatch.setattr("news._ollama_generate", boom)
     result = news_risk_for_city(CHICAGO, AS_OF, lookback_days=7)
     ids = [article["id"] for article in result["articles"]]
-    assert ids == ["chi-road", "state-storm", "chi-bridge"]
+    assert ids == ["chi-road", "chi-bridge"]
     assert "chi-sports" not in ids
+    assert "state-storm" not in ids
     assert "chi-old" not in ids
     assert "dal-crash" not in ids
     total = sum(_expected_contribution(article) for article in result["articles"])
     assert result["score"] == pytest.approx(min(1.0, total))
     assert 0 < float(result["score"]) <= 1
     assert result["trend"] == {
-        "direction": "rising",
-        "current_road_events": 3,
+        "direction": "flat",
+        "current_road_events": 2,
         "prior_road_events": 2,
     }
     encoded = json.dumps(result)
@@ -90,13 +90,18 @@ def test_live_path_classifies_once_and_drops_the_body(
     calls = {"model": 0, "bodies": 0}
     licensed = "Unique licensed sentence that must stay off disk."
 
-    def fake_match(city: object, as_of: datetime, lookback_days: float) -> list[dict[str, object]]:
-        if as_of == AS_OF:
+    def fake_match(
+        cities: list[object],
+        as_of: datetime,
+        window_start: datetime,
+    ) -> list[dict[str, object]]:
+        published = datetime(2026, 6, 14, tzinfo=UTC)
+        if window_start < published <= as_of:
             return [
                 {
                     "id": "live-1",
                     "headline": "Chicago highway closed",
-                    "published_at": datetime(2026, 6, 14, tzinfo=UTC),
+                    "published_at": published,
                 }
             ]
         return []
@@ -111,7 +116,7 @@ def test_live_path_classifies_once_and_drops_the_body(
         assert licensed in prompt
         return json.dumps(ROAD_LABEL)
 
-    monkeypatch.setattr("news._match_articles", fake_match)
+    monkeypatch.setattr("news._match_headlines", fake_match)
     monkeypatch.setattr("news._fetch_bodies", fake_bodies)
     monkeypatch.setattr("news._ollama_generate", fake_model)
 
@@ -148,6 +153,34 @@ def test_bad_model_output_falls_back_and_is_cached(monkeypatch: pytest.MonkeyPat
     rejected = classify_article("bad-2", "Headline", "Body text")
     assert rejected.relevant is False
     assert calls["n"] == 2
+
+
+def test_live_news_skips_dates_outside_2022_through_2024(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("USE_MOCK_DATA", "false")
+
+    def boom(*_args: object, **_kwargs: object) -> list[dict[str, object]]:
+        raise AssertionError("news query should not run")
+
+    monkeypatch.setattr("news.fetch_all", boom)
+    outside = news_risk_for_city(CHICAGO, AS_OF, lookback_days=7)
+    assert outside["score"] == 0
+    assert outside["articles"] == []
+    assert outside["trend"]["direction"] == "flat"
+    assert get_news_for_city(CHICAGO, datetime(2021, 12, 31, tzinfo=UTC), 7) == []
+
+    calls = {"n": 0}
+
+    def fake_fetch(_sql: str, _params: object = None) -> list[dict[str, object]]:
+        calls["n"] += 1
+        return []
+
+    monkeypatch.setattr("news.fetch_all", fake_fetch)
+    news_risk_for_city(CHICAGO, datetime(2024, 6, 15, tzinfo=UTC), lookback_days=7)
+    news_risk_for_city(CHICAGO, datetime(2022, 1, 1, tzinfo=UTC), lookback_days=7)
+    news_risk_for_city(CHICAGO, datetime(2024, 12, 31, 23, 59, 59, tzinfo=UTC), lookback_days=7)
+    assert calls["n"] == 3
+    news_risk_for_city(CHICAGO, datetime(2025, 1, 1, tzinfo=UTC), lookback_days=7)
+    assert calls["n"] == 3
 
 
 def test_ollama_request_is_json_at_temperature_zero() -> None:

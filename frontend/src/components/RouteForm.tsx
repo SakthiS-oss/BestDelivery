@@ -1,48 +1,22 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 
 import type { CityOption, PlanRequest } from "../api/types";
 import { dateInputValue } from "../display";
-
-export type ReplaySeed = {
-  token: number;
-  start: string;
-  end: string;
-  asOf: string;
-  deadline: string;
-};
 
 export type RouteFormProps = {
   cities: CityOption[];
   citiesStatus: "loading" | "ready" | "failed";
   loading: boolean;
   error: string | null;
-  replay: ReplaySeed | null;
   onSubmit: (request: PlanRequest) => void;
 };
 
-export function RouteForm({ cities, citiesStatus, loading, error, replay, onSubmit }: RouteFormProps) {
+export function RouteForm({ cities, citiesStatus, loading, error, onSubmit }: RouteFormProps) {
   const [start, setStart] = useState("Dallas, TX");
   const [end, setEnd] = useState("Atlanta, GA");
   const [deadline, setDeadline] = useState(() => dateInputValue(4));
   const [asOf, setAsOf] = useState("");
   const [localError, setLocalError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!replay) {
-      return;
-    }
-    setStart(replay.start);
-    setEnd(replay.end);
-    setDeadline(replay.deadline);
-    setAsOf(replay.asOf);
-    setLocalError(null);
-    onSubmit({
-      start: replay.start,
-      end: replay.end,
-      deadline: `${replay.deadline}T23:59:59Z`,
-      as_of_date: replay.asOf,
-    });
-  }, [replay]);
 
   function submit(event: FormEvent) {
     event.preventDefault();

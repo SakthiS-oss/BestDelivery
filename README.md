@@ -1,8 +1,6 @@
 # Chokepoint
 
-Chokepoint ranks truck routes between major US cities. You give a start city, an end city, and a deadline. The app returns a fastest path and up to three alternatives scored from drive time, natural-hazard records, and news. An optional as-of date replays only the records known by the end of that day.
-
-The counts and hours are calculations. A historical replay is evidence about those past cases. It is not a guarantee that a later disruption would be avoided.
+Chokepoint ranks truck routes between major US cities. You give a start city, an end city, and a deadline. The app returns a fastest path and up to three alternatives scored from drive time, natural-hazard records, and news. An optional as-of date uses only the records known by the end of that day.
 
 ## Architecture
 
@@ -25,15 +23,14 @@ flowchart LR
 
 | Piece | Role |
 | --- | --- |
-| `frontend` | Form, Leaflet map, route cards, backtest page, score panel |
-| `backend/app/api` | `/plan`, `/cities`, `/city/{name}/risk`, `/health`, `/backtest` |
+| `frontend` | Form, Leaflet map, route cards, score panel |
+| `backend/app/api` | `/plan`, `/cities`, `/city/{name}/risk`, `/health` |
 | `backend/app/routing` | City catalog, hop graph, k-shortest paths |
 | `backend/scoring.py` | Hazard and news delay, deadline check, ranking |
 | `backend/hazards.py` | Disaster rows and the 0–1 hazard score |
 | `backend/news.py` | News rows, local classification cache, 0–1 news score |
 | `backend/explain.py` | Plain-English notes from the computed facts |
 | `backend/snowflake_client.py` | Read-only Snowflake connection |
-| `scripts/backtest.py` | Historical replay written to `data/backtest_report.json` |
 
 The same routes are also mounted under `/api`. A calendar `as_of_date` means the end of that UTC day. Hazard and news queries keep rows dated on or before that instant and drop anything later.
 
@@ -74,18 +71,6 @@ Restart the API after changing it. The UI shows a banner when mock mode is on. H
 
 To use live tables instead, set `USE_MOCK_DATA=false` and fill in the Snowflake settings below. Ollama has to be running if you want live news classification or model-written explanations. If either service is down, the plan still returns and the response `warnings` field says which scores were left out.
 
-## Backtest
-
-From the repo root, with mock data:
-
-```bash
-python scripts/backtest.py
-```
-
-The script picks past disaster events from the local hazard file. For each event it plans five sample routes through the affected area, using only records dated on or before three days before the event. It writes `data/backtest_report.json` and prints a table: events tested, routes whose fastest path entered the later danger zone, how many proposed routes left those cities, and the average extra drive hours on the routes that left.
-
-The Backtest page in the UI reads that file. It does not recompute the routes. Replay loads one saved sample into the planner. `--live` leaves `USE_MOCK_DATA` as it is in the environment. The default run forces mock files so the replay does not depend on a warehouse.
-
 ## Environment variables
 
 | Variable | Used for |
@@ -114,7 +99,7 @@ Snowflake is the live source for hazards and news when mock mode is off.
 - Every statement goes through `assert_select_only`. A query must be one `SELECT` or `WITH`. Inserts, updates, deletes, and other write verbs are rejected.
 - Table names are split on dots and each part has to match an identifier pattern. They are not pasted in from the request.
 - Hazard SQL keeps events whose start is at or before `as_of`. News SQL keeps articles whose `published_at` is after the lookback start and at or before `as_of`. Those cutoffs are bound parameters.
-- The hazard table is Ambee's `ND_ACTUALS`. The news table is `BBC_NEWS` from the BBC, Google, and CNN news listing. Place names are not columns on the news table, so a row matches when the city or state name appears in the headline or content.
+- The hazard table is Ambee's `ND_ACTUALS`. The news table is `BBC_NEWS` from the BBC, Google, and CNN news listing. Place names are not columns on the news table, so a row matches when the city name appears in the headline. The query drops articles older than six months before that comparison.
 - Article bodies are read only long enough to classify an uncached id. SQLite stores the classification. API responses contain the source id, headline, and date, not the article text.
 - `GET /health` runs `SELECT 1` outside mock mode. If Snowflake or Ollama cannot be reached, health is `degraded` and a plan returns partial scores plus `warnings` instead of failing the request.
 

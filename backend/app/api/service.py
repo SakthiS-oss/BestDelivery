@@ -17,7 +17,7 @@ from app.domain.models import City
 from app.routing.cities import load_cities, resolve_city
 from app.routing.edges import load_edges
 from scoring import RankedRoutes, plan_routes
-from snowflake_client import health_check, use_mock_data
+from snowflake_client import health_check, snowflake_session, use_mock_data
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 REQUEST_TIMEOUT_SECONDS = 60.0
@@ -240,29 +240,62 @@ def rank_with_fallback(
             warnings,
         )
 
+    def news_batch(
+        batch: list[object],
+        as_of_date: date | datetime,
+        lookback_days: float | None = None,
+    ) -> dict[str, object]:
+        return _call_source(
+            lambda: news.news_risks_for_cities(batch, as_of_date, lookback_days),
+            lambda: {_plan_city_key(city): _empty_news() for city in batch},
+            NEWS_WARNING,
+            warnings,
+        )
+
+    def run_plan() -> RankedRoutes:
+        return plan_routes(
+            cities,
+            edges,
+            origin,
+            destination,
+            as_of=as_of,
+            deadline_hours=deadline_hours,
+        )
+
     with _plan_lock:
         previous = (
             scoring.hazard_risk_for_city,
             scoring.hazard_risk_for_edge,
             scoring.news_risk_for_city,
+            scoring.news_risks_for_cities,
         )
         scoring.hazard_risk_for_city = hazard_city
         scoring.hazard_risk_for_edge = hazard_edge
         scoring.news_risk_for_city = news_city
+        scoring.news_risks_for_cities = news_batch
         try:
-            return plan_routes(
-                cities,
-                edges,
-                origin,
-                destination,
-                as_of=as_of,
-                deadline_hours=deadline_hours,
-            )
+            if use_mock_data():
+                return run_plan()
+            try:
+                with snowflake_session():
+                    return run_plan()
+            except Exception as exc:
+                if not is_dependency_failure(exc):
+                    raise
+                _warn(warnings, HAZARD_WARNING)
+                _warn(warnings, NEWS_WARNING)
+                scoring.hazard_risk_for_city = lambda *_args, **_kwargs: _empty_hazard()
+                scoring.hazard_risk_for_edge = lambda *_args, **_kwargs: _empty_hazard()
+                scoring.news_risks_for_cities = lambda batch, *_args, **_kwargs: {
+                    _plan_city_key(city): _empty_news() for city in batch
+                }
+                return run_plan()
         finally:
             (
                 scoring.hazard_risk_for_city,
                 scoring.hazard_risk_for_edge,
                 scoring.news_risk_for_city,
+                scoring.news_risks_for_cities,
             ) = previous
 
 
@@ -313,6 +346,15 @@ def _city_option(city: City) -> CityOption:
 
 def _end_of_utc_day(value: date) -> datetime:
     return datetime(value.year, value.month, value.day, 23, 59, 59, tzinfo=UTC)
+
+
+def _plan_city_key(city: object) -> str:
+    if isinstance(city, dict) and city.get("id"):
+        return str(city["id"])
+    city_id = getattr(city, "id", None)
+    if city_id:
+        return str(city_id)
+    return str(getattr(city, "name", "")).casefold()
 
 
 def _empty_hazard() -> dict[str, object]:

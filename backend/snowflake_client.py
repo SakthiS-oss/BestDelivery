@@ -1,5 +1,6 @@
 """Read-only Snowflake access. Credentials come from the environment."""
 
+import contextvars
 import os
 import re
 from collections.abc import Iterator, Mapping
@@ -13,6 +14,7 @@ DEFAULT_DISASTER_TABLE = (
     "AMBEE_GLOBAL_NATURAL_DISASTERS_DATA_HISTORICAL_AND_PRESENT_CONDITIONS.ND.ND_ACTUALS"
 )
 _IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_$]*$")
+_session: contextvars.ContextVar[object | None] = contextvars.ContextVar("snowflake_session", default=None)
 _FORBIDDEN = re.compile(
     r"\b(INSERT|UPDATE|DELETE|MERGE|COPY|PUT|GET|CALL|ALTER|DROP|CREATE|TRUNCATE|GRANT|REVOKE)\b",
     re.IGNORECASE,
@@ -55,6 +57,21 @@ def snowflake_connection() -> Iterator[object]:
         conn.close()
 
 
+@contextmanager
+def snowflake_session() -> Iterator[object]:
+    """Reuse one connection for every query inside the block."""
+    current = _session.get()
+    if current is not None:
+        yield current
+        return
+    with snowflake_connection() as conn:
+        token = _session.set(conn)
+        try:
+            yield conn
+        finally:
+            _session.reset(token)
+
+
 def connect() -> object:
     """Open a Snowflake connection from SNOWFLAKE_* environment variables."""
     import snowflake.connector
@@ -77,16 +94,26 @@ def connect() -> object:
 
 
 def fetch_all(sql: str, params: Mapping[str, object] | None = None) -> list[dict[str, object]]:
-    """Run one parameterized SELECT and return row dicts with lowercase keys."""
+    """Run one parameterized SELECT and return row dicts with lowercase keys.
+
+    Queries inside ``snowflake_session`` share that connection.
+    """
     assert_select_only(sql)
+    active = _session.get()
+    if active is not None:
+        return _execute(active, sql, params)
     with snowflake_connection() as conn:
-        cursor = conn.cursor()
-        try:
-            cursor.execute(sql, dict(params) if params else None)
-            columns = [column[0].lower() for column in cursor.description]
-            return [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]
-        finally:
-            cursor.close()
+        return _execute(conn, sql, params)
+
+
+def _execute(conn: object, sql: str, params: Mapping[str, object] | None) -> list[dict[str, object]]:
+    cursor = conn.cursor()
+    try:
+        cursor.execute(sql, dict(params) if params else None)
+        columns = [column[0].lower() for column in cursor.description]
+        return [dict(zip(columns, row, strict=True)) for row in cursor.fetchall()]
+    finally:
+        cursor.close()
 
 
 def health_check() -> dict[str, object]:

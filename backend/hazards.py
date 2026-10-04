@@ -268,11 +268,15 @@ def _fetch_snowflake(
 
 
 def _events_sql(table: str, *, by_state: bool) -> str:
+    """Quoted names: the Ambee columns are lowercase identifiers."""
     location = (
-        "UPPER(state) = UPPER(%(state)s)"
+        'UPPER("state") = UPPER(%(state)s)'
         if by_state
-        else "lat BETWEEN %(min_lat)s AND %(max_lat)s AND longitude BETWEEN %(min_lon)s AND %(max_lon)s"
+        else '"lat" BETWEEN %(min_lat)s AND %(max_lat)s AND COALESCE("lng", "lon") BETWEEN %(min_lon)s AND %(max_lon)s'
     )
+    start = 'TRY_TO_TIMESTAMP_NTZ(TO_VARCHAR("date"))'
+    end = 'TRY_TO_TIMESTAMP_NTZ(TO_VARCHAR("end_date"))'
+    estimated = 'TRY_TO_TIMESTAMP_NTZ(TO_VARCHAR("estimated_end_date"))'
     return f"""
         SELECT
             event_id,
@@ -290,27 +294,29 @@ def _events_sql(table: str, *, by_state: bool) -> str:
             details
         FROM (
             SELECT
-                event_id,
-                event_type,
-                event_name,
-                lat,
-                COALESCE(lng, lon) AS longitude,
-                TRY_TO_TIMESTAMP_NTZ(TO_VARCHAR(date)) AS start_ts,
-                TRY_TO_TIMESTAMP_NTZ(TO_VARCHAR(end_date)) AS end_ts,
-                TRY_TO_TIMESTAMP_NTZ(TO_VARCHAR(estimated_end_date)) AS est_end_ts,
-                city,
-                state,
-                country_code,
-                alert_level,
-                details
+                "event_id" AS event_id,
+                "event_type" AS event_type,
+                "event_name" AS event_name,
+                "lat" AS lat,
+                COALESCE("lng", "lon") AS longitude,
+                {start} AS start_ts,
+                {end} AS end_ts,
+                {estimated} AS est_end_ts,
+                "city" AS city,
+                "state" AS state,
+                "country_code" AS country_code,
+                "alert_level" AS alert_level,
+                "details" AS details
             FROM {table}
+            WHERE "lat" IS NOT NULL
+              AND COALESCE("lng", "lon") IS NOT NULL
+              AND {start} IS NOT NULL
+              AND {start} <= %(as_of)s
+              AND COALESCE({end}, {estimated}, {start}) >= %(window_start)s
+              AND {location}
         ) AS hazards
-        WHERE lat IS NOT NULL
-          AND longitude IS NOT NULL
-          AND start_ts IS NOT NULL
-          AND start_ts <= %(as_of)s
+        WHERE start_ts <= %(as_of)s
           AND COALESCE(end_ts, est_end_ts, start_ts) >= %(window_start)s
-          AND {location}
     """
 
 

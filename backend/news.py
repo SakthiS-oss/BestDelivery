@@ -3,8 +3,10 @@
 The live table is ``BBCGOOGLECNN_NEWS_LISTING.PUBLIC.BBC_NEWS``. Every column
 is VARCHAR. ``PUBLICATION_DATE`` is a UTC timestamp string, sometimes wrapped
 in quotes (``"2024-02-23T18:18:11.000Z"``). Place names are not columns: a row
-matches when the city name or the full state name appears in ``HEADLINE`` or
-``CONTENT``.
+matches when the city name appears in ``HEADLINE``. The scan drops rows
+older than six months before that comparison. ``CONTENT`` is not searched.
+The live table covers 2022 through 2024. An as-of date outside that range
+skips the query.
 
 Article bodies are licensed. They are read only long enough to classify an
 uncached id, then dropped. SQLite stores the classification. Public results
@@ -29,6 +31,9 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 MOCK_NEWS_PATH = REPO_ROOT / "data" / "mock_news.json"
 DEFAULT_NEWS_TABLE = "BBCGOOGLECNN_NEWS_LISTING.PUBLIC.BBC_NEWS"
 DEFAULT_LOOKBACK_DAYS = 7.0
+NEWS_SCAN_MONTHS = 6
+BBC_COVERAGE_START = datetime(2022, 1, 1, tzinfo=UTC)
+BBC_COVERAGE_END = datetime(2025, 1, 1, tzinfo=UTC)
 RECENCY_HALFLIFE_DAYS = 7.0
 MAX_CLASSIFY_CHARS = 4000
 _CACHE_DDL = """
@@ -128,11 +133,15 @@ def get_news_for_city(
     as_of_date: date | datetime,
     lookback_days: float,
 ) -> list[dict[str, object]]:
-    """Return articles that mention the city or its state in the date window.
+    """Return articles whose headline names the city inside the date window.
 
     Each item is ``id``, ``headline``, and ``date`` only.
     """
-    return [_public_article(row) for row in _match_articles(city, as_of_date, lookback_days)]
+    as_of = _as_utc(as_of_date)
+    window = _lookback(lookback_days)
+    rows = _match_headlines([city], as_of, as_of - timedelta(days=window))
+    name, _state = _search_terms(city)
+    return [_public_article(row) for row in rows if _headline_mentions(str(row["headline"]), name)]
 
 
 def news_risk_for_city(
@@ -155,9 +164,38 @@ def news_risk_for_city(
     """
     window = DEFAULT_LOOKBACK_DAYS if lookback_days is None else _lookback(lookback_days)
     as_of = _as_utc(as_of_date)
-    current = _classified_matches(city, as_of, window)
-    prior_as_of = as_of - timedelta(days=window)
-    prior = _classified_matches(city, prior_as_of, window)
+    grouped = news_risks_for_cities([city], as_of, window)
+    return grouped[_city_key(city)]
+
+
+def news_risks_for_cities(
+    cities: list[object],
+    as_of_date: date | datetime,
+    lookback_days: float | None = None,
+) -> dict[str, dict[str, object]]:
+    """Score every city from one headline query covering both trend windows."""
+    if not cities:
+        return {}
+    window = DEFAULT_LOOKBACK_DAYS if lookback_days is None else _lookback(lookback_days)
+    as_of = _as_utc(as_of_date)
+    span_start = as_of - timedelta(days=2 * window)
+    prepared = _classify_rows(_match_headlines(cities, as_of, span_start))
+    current_start = as_of - timedelta(days=window)
+    scores: dict[str, dict[str, object]] = {}
+    for city in cities:
+        name, _state = _search_terms(city)
+        mine = [row for row in prepared if _headline_mentions(str(row["headline"]), name)]
+        current = [row for row in mine if _in_window(row["published_at"], as_of, current_start)]
+        prior = [row for row in mine if _in_window(row["published_at"], current_start, span_start)]
+        scores[_city_key(city)] = _risk_from_windows(current, prior, as_of)
+    return scores
+
+
+def _risk_from_windows(
+    current: list[dict[str, object]],
+    prior: list[dict[str, object]],
+    as_of: datetime,
+) -> dict[str, object]:
     scored = [_with_contribution(row, as_of) for row in current if _counts_for_risk(row)]
     scored.sort(key=lambda row: float(row["contribution"]), reverse=True)
     total = sum(float(row["contribution"]) for row in scored)
@@ -222,33 +260,29 @@ def ollama_request_body(prompt: str, model: str) -> dict[str, object]:
     }
 
 
-def news_match_sql(table: str, *, include_state: bool) -> str:
-    """Parameterized match query. The outer select omits article text."""
-    state_clause = ""
-    if include_state:
-        state_clause = """
-            OR HEADLINE ILIKE %(state_like)s ESCAPE '\\'
-            OR CONTENT ILIKE %(state_like)s ESCAPE '\\'"""
+def news_match_sql(table: str, city_count: int) -> str:
+    """One headline query. The six-month cutoff is applied before the text match."""
+    if city_count < 1:
+        raise ValueError("city_count must be at least 1")
+    clauses = " OR ".join(
+        f"headline ILIKE %(city_{index})s ESCAPE '\\\\'" for index in range(city_count)
+    )
+    published = "TRY_TO_TIMESTAMP_TZ(TRIM(PUBLICATION_DATE, '\"'))"
     return f"""
         SELECT id, headline, published_at
         FROM (
             SELECT
                 ID AS id,
                 HEADLINE AS headline,
-                CONTENT AS content,
-                CONVERT_TIMEZONE(
-                    'UTC',
-                    TRY_TO_TIMESTAMP_TZ(TRIM(PUBLICATION_DATE, '"'))
-                ) AS published_at
+                CONVERT_TIMEZONE('UTC', {published}) AS published_at
             FROM {qualified_table(table)}
+            WHERE {published} <= %(as_of)s
+              AND {published} > DATEADD(month, %(scan_months)s, %(as_of)s)
         ) AS articles
         WHERE published_at IS NOT NULL
           AND published_at <= %(as_of)s
           AND published_at > %(window_start)s
-          AND (
-                HEADLINE ILIKE %(city_like)s ESCAPE '\\'
-                OR CONTENT ILIKE %(city_like)s ESCAPE '\\'{state_clause}
-          )
+          AND ({clauses})
     """
 
 
@@ -258,12 +292,7 @@ def like_contains(term: str) -> str:
     return f"%{escaped}%"
 
 
-def _classified_matches(
-    city: object,
-    as_of: datetime,
-    lookback_days: float,
-) -> list[dict[str, object]]:
-    rows = _match_articles(city, as_of, lookback_days)
+def _classify_rows(rows: list[dict[str, object]]) -> list[dict[str, object]]:
     if use_mock_data():
         for row in rows:
             row["classification"] = _mock_classification(row)
@@ -279,31 +308,37 @@ def _classified_matches(
     return rows
 
 
-def _match_articles(
-    city: object,
-    as_of_date: date | datetime,
-    lookback_days: float,
+def _match_headlines(
+    cities: list[object],
+    as_of: datetime,
+    window_start: datetime,
 ) -> list[dict[str, object]]:
-    as_of = _as_utc(as_of_date)
-    window_start = as_of - timedelta(days=_lookback(lookback_days))
-    city_name, state_name = _search_terms(city)
+    """Articles in the window whose headline names one of the cities."""
+    names = []
+    for city in cities:
+        name, _state = _search_terms(city)
+        if name.casefold() not in {item.casefold() for item in names}:
+            names.append(name)
+    if not names:
+        return []
     if use_mock_data():
-        matched = [
+        return [
             row
             for row in _load_mock_rows()
-            if _mentions(row, city_name, state_name) and _in_window(row["published_at"], as_of, window_start)
+            if _in_window(row["published_at"], as_of, window_start)
+            and any(_headline_mentions(str(row["headline"]), name) for name in names)
         ]
-        return matched
-    include_state = state_name is not None
+    if not _within_bbc_coverage(as_of):
+        return []
     params: dict[str, object] = {
         "as_of": as_of.replace(tzinfo=None),
         "window_start": window_start.replace(tzinfo=None),
-        "city_like": like_contains(city_name),
+        "scan_months": -NEWS_SCAN_MONTHS,
     }
-    if include_state:
-        params["state_like"] = like_contains(state_name)
+    for index, name in enumerate(names):
+        params[f"city_{index}"] = like_contains(name)
     table = os.environ.get("SNOWFLAKE_NEWS_TABLE", "").strip() or DEFAULT_NEWS_TABLE
-    queried = fetch_all(news_match_sql(table, include_state=include_state), params)
+    queried = fetch_all(news_match_sql(table, len(names)), params)
     rows: list[dict[str, object]] = []
     for row in queried:
         published = _parse_time(row.get("published_at"))
@@ -317,6 +352,26 @@ def _match_articles(
             }
         )
     return rows
+
+
+def _within_bbc_coverage(as_of: datetime) -> bool:
+    """True when the as-of instant falls in the BBC table's 2022–2024 coverage."""
+    moment = as_of if as_of.tzinfo else as_of.replace(tzinfo=UTC)
+    moment = moment.astimezone(UTC)
+    return BBC_COVERAGE_START <= moment < BBC_COVERAGE_END
+
+
+def _headline_mentions(headline: str, city_name: str) -> bool:
+    return city_name.casefold() in headline.casefold()
+
+
+def _city_key(city: object) -> str:
+    if isinstance(city, dict) and city.get("id"):
+        return str(city["id"])
+    if getattr(city, "id", None):
+        return str(city.id)
+    name, _state = _search_terms(city)
+    return name.casefold()
 
 
 def _fetch_bodies(article_ids: list[str]) -> dict[str, str]:
@@ -377,13 +432,6 @@ def _public_article(row: dict[str, object]) -> dict[str, object]:
         "headline": row["headline"],
         "date": published.astimezone(UTC).isoformat(),
     }
-
-
-def _mentions(row: dict[str, object], city_name: str, state_name: str | None) -> bool:
-    haystack = f"{row['headline']}\n{row.get('content', '')}".casefold()
-    if city_name.casefold() in haystack:
-        return True
-    return state_name is not None and state_name.casefold() in haystack
 
 
 def _in_window(published: object, as_of: datetime, window_start: datetime) -> bool:
@@ -452,6 +500,8 @@ def _classification_prompt(headline: str, content: str) -> str:
 
 
 def _ollama_generate(prompt: str) -> str:
+    if os.environ.get("EXPLAIN_PROVIDER", "ollama").strip().lower() == "cloud":
+        return _cloud_generate(prompt)
     base = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434").rstrip("/")
     model = os.environ.get("OLLAMA_MODEL", "llama3.2")
     response = httpx.post(
@@ -464,6 +514,32 @@ def _ollama_generate(prompt: str) -> str:
     text = payload.get("response")
     if not isinstance(text, str):
         raise ValueError("Ollama returned no text")
+    return text
+
+
+def _cloud_generate(prompt: str) -> str:
+    """OpenAI-compatible chat call used when explanations run on the cloud model."""
+    base = os.environ.get("CLOUD_MODEL_BASE_URL", "").strip().rstrip("/")
+    if not base:
+        raise RuntimeError("CLOUD_MODEL_BASE_URL is not set")
+    model = os.environ.get("CLOUD_MODEL_NAME", "meta-llama/Llama-3.1-8B-Instruct")
+    key = os.environ.get("CLOUD_MODEL_API_KEY", "").strip()
+    headers = {"Authorization": f"Bearer {key}"} if key else {}
+    url = base if base.endswith("/chat/completions") else f"{base}/chat/completions"
+    response = httpx.post(
+        url,
+        headers=headers,
+        json={
+            "model": model,
+            "temperature": 0,
+            "messages": [{"role": "user", "content": prompt}],
+        },
+        timeout=httpx.Timeout(120.0, connect=3.0),
+    )
+    response.raise_for_status()
+    text = response.json()["choices"][0]["message"]["content"]
+    if not isinstance(text, str):
+        raise ValueError("cloud model returned no text")
     return text
 
 

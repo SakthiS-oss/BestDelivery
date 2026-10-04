@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 
 import { fetchCities, fetchCityRisk, fetchHealth, planDelivery, toError } from "./api/client";
 import type {
-  BacktestSample,
   City,
   CityOption,
   CityRiskDetail,
@@ -11,9 +10,8 @@ import type {
   PlanRequest,
   PlanResponse,
 } from "./api/types";
-import { BacktestPage } from "./components/BacktestPage";
 import { CityPanel } from "./components/CityPanel";
-import { RouteForm, type ReplaySeed } from "./components/RouteForm";
+import { RouteForm } from "./components/RouteForm";
 import { RouteList } from "./components/RouteList";
 import { RouteMap } from "./components/RouteMap";
 import { ScoresPanel } from "./components/ScoresPanel";
@@ -34,8 +32,6 @@ export function App() {
   const [activeCityId, setActiveCityId] = useState<string | null>(null);
   const [cityLoading, setCityLoading] = useState(false);
   const [cityError, setCityError] = useState<string | null>(null);
-  const [view, setView] = useState<"planner" | "backtest">("planner");
-  const [replay, setReplay] = useState<ReplaySeed | null>(null);
   const [scoresOpen, setScoresOpen] = useState(false);
   const [detailNote, setDetailNote] = useState<string | null>(null);
 
@@ -130,18 +126,6 @@ export function App() {
       .finally(() => setCityLoading(false));
   }
 
-  function onReplay(sample: BacktestSample) {
-    setView("planner");
-    setCompare(true);
-    setReplay({
-      token: Date.now(),
-      start: sample.start,
-      end: sample.end,
-      asOf: sample.as_of_date,
-      deadline: sample.deadline_date,
-    });
-  }
-
   const detail = activeCityId ? riskByCity[activeCityId] ?? null : null;
   const warnings = plan?.warnings ?? [];
 
@@ -173,19 +157,10 @@ export function App() {
         <div className="border-b border-amber-900 bg-amber-950/70 px-4 py-2 text-sm text-amber-100">{detailNote}</div>
       ) : null}
       <div className="flex gap-2 border-b border-zinc-800 px-4 py-2 text-sm">
-        <ViewButton active={view === "planner"} onClick={() => setView("planner")}>
-          Planner
-        </ViewButton>
-        <ViewButton active={view === "backtest"} onClick={() => setView("backtest")}>
-          Backtest
-        </ViewButton>
         <ViewButton active={scoresOpen} onClick={() => setScoresOpen((open) => !open)}>
           How scores work
         </ViewButton>
       </div>
-      {view === "backtest" ? (
-        <BacktestPage onReplay={onReplay} />
-      ) : (
       <div className="grid min-h-0 flex-1 grid-cols-1 min-[800px]:grid-cols-[240px_minmax(0,1fr)_260px]">
         <aside className="overflow-y-auto border-zinc-800 min-[800px]:border-r">
           <RouteForm
@@ -193,7 +168,6 @@ export function App() {
             citiesStatus={citiesStatus}
             loading={loading}
             error={error}
-            replay={replay}
             onSubmit={onSubmit}
           />
         </aside>
@@ -230,7 +204,6 @@ export function App() {
           />
         </aside>
       </div>
-      )}
       {scoresOpen ? <ScoresPanel weights={plan?.weights ?? null} onClose={() => setScoresOpen(false)} /> : null}
     </div>
   );

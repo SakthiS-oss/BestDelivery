@@ -4,8 +4,6 @@ from typing import Annotated
 
 from fastapi import APIRouter, Body, HTTPException, Query
 
-from backtest import load_saved_report
-
 from app.api.schemas import (
     PLAN_EXAMPLE,
     CityOption,
@@ -23,23 +21,6 @@ router = APIRouter()
 def health() -> HealthResponse:
     """Report mock mode and whether Snowflake and Ollama are reachable."""
     return build_health()
-
-
-@router.get("/backtest")
-def backtest() -> dict[str, object]:
-    """Saved historical replay. Run scripts/backtest.py to refresh it."""
-    try:
-        return load_saved_report()
-    except FileNotFoundError:
-        raise HTTPException(
-            status_code=404,
-            detail="No backtest report yet. From the repo root, run: python scripts/backtest.py",
-        ) from None
-    except ValueError:
-        raise HTTPException(
-            status_code=500,
-            detail="The saved backtest report is not valid JSON. From the repo root, run: python scripts/backtest.py",
-        ) from None
 
 
 @router.get("/cities", response_model=list[CityOption])

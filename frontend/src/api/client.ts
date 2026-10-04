@@ -1,7 +1,6 @@
 /** HTTP client for the FastAPI server. */
 
 import type {
-  BacktestReport,
   CityOption,
   CityRiskDetail,
   HealthResponse,
@@ -21,10 +20,6 @@ export class ApiError extends Error {
 export function apiBaseUrl(): string {
   const configured = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
   return configured.replace(/\/$/, "");
-}
-
-export async function fetchBacktest(): Promise<BacktestReport> {
-  return getJson<BacktestReport>("/backtest");
 }
 
 export async function fetchHealth(): Promise<HealthResponse> {

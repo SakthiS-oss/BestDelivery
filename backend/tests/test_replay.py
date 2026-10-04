@@ -7,7 +7,6 @@ import pytest
 
 from app.domain.models import City, Hop
 from app.routing.cities import city_id
-from backtest import route_avoided
 from hazards import _events_sql, get_hazard_events, hazard_risk_for_city
 from news import get_news_for_city, news_match_sql, news_risk_for_city
 from scoring import plan_routes
@@ -29,7 +28,7 @@ def isolated(monkeypatch: pytest.MonkeyPatch, tmp_path):
 
 def test_sql_keeps_only_rows_dated_on_or_before_as_of() -> None:
     hazard_sql = _events_sql("ND.ND_ACTUALS", by_state=False)
-    news_sql = news_match_sql("NEWS.BBC_NEWS", include_state=False)
+    news_sql = news_match_sql("NEWS.BBC_NEWS", 1)
     assert "start_ts <= %(as_of)s" in hazard_sql
     assert "published_at <= %(as_of)s" in news_sql
     assert "published_at > %(window_start)s" in news_sql
@@ -93,54 +92,6 @@ def test_moving_as_of_forward_is_what_reveals_the_later_record(isolated) -> None
     shown_news = get_news_for_city(HOUSTON, datetime(2026, 6, 16, 12, tzinfo=UTC), 7)
     assert hidden_news == []
     assert {article["id"] for article in shown_news} == {"future-news"}
-
-
-def test_backtest_endpoint_reads_the_saved_report(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
-    from fastapi.testclient import TestClient
-
-    from app.main import app
-
-    monkeypatch.setattr("backtest.REPORT_PATH", tmp_path / "missing.json")
-    missing = TestClient(app).get("/backtest")
-    assert missing.status_code == 404
-    assert "scripts/backtest.py" in missing.json()["detail"]
-
-    report = tmp_path / "report.json"
-    report.write_text(
-        json.dumps(
-            {
-                "disclaimer": "Historical replay only.",
-                "events_tested": 1,
-                "routes_through_danger": 2,
-                "routes_avoided": 1,
-                "average_extra_hours": 1.5,
-                "events": [],
-            }
-        ),
-        encoding="utf-8",
-    )
-    monkeypatch.setattr("backtest.REPORT_PATH", report)
-    found = TestClient(app).get("/backtest")
-    assert found.status_code == 200
-    assert found.json()["routes_avoided"] == 1
-
-    broken = tmp_path / "broken.json"
-    broken.write_text("{", encoding="utf-8")
-    monkeypatch.setattr("backtest.REPORT_PATH", broken)
-    invalid = TestClient(app).get("/backtest")
-    assert invalid.status_code == 500
-    assert "not valid JSON" in invalid.json()["detail"]
-
-
-def test_route_avoided_requires_the_baseline_to_have_entered_the_city() -> None:
-    affected = {"houston-tx"}
-    assert route_avoided(["dallas-tx", "houston-tx", "atlanta-ga"], ["dallas-tx", "little-rock-ar", "atlanta-ga"], affected)
-    assert not route_avoided(
-        ["dallas-tx", "houston-tx", "atlanta-ga"],
-        ["dallas-tx", "houston-tx", "atlanta-ga"],
-        affected,
-    )
-    assert not route_avoided(["dallas-tx", "atlanta-ga"], ["dallas-tx", "memphis-tn", "atlanta-ga"], affected)
 
 
 def _hazard(event_id: str, when: str) -> dict[str, object]:
