@@ -1,0 +1,134 @@
+[
+  {
+    "id": "chi-road",
+    "headline": "Flood closes Chicago expressways",
+    "publication_date": "2026-06-14T12:00:00Z",
+    "content": "Standing water shut lanes on the downtown freeway through Chicago.",
+    "classification": {
+      "relevant": true,
+      "event_type": "road_closure",
+      "severity": 3,
+      "affects_road_travel": true
+    }
+  },
+  {
+    "id": "chi-bridge",
+    "headline": "Bridge work slows Chicago freight",
+    "publication_date": "2026-06-10T15:00:00Z",
+    "content": "Lane restrictions on the river bridge are delaying trucks in Chicago.",
+    "classification": {
+      "relevant": true,
+      "event_type": "infrastructure",
+      "severity": 2,
+      "affects_road_travel": true
+    }
+  },
+  {
+    "id": "chi-sports",
+    "headline": "Chicago marathon draws crowds",
+    "publication_date": "2026-06-12T18:00:00Z",
+    "content": "Runners filled downtown Chicago for a Sunday race.",
+    "classification": {
+      "relevant": false,
+      "event_type": "other",
+      "severity": 0,
+      "affects_road_travel": false
+    }
+  },
+  {
+    "id": "state-storm",
+    "headline": "Downstate storm watch",
+    "publication_date": "2026-06-11T06:00:00Z",
+    "content": "Heavy rain flooded roads across Illinois overnight.",
+    "classification": {
+      "relevant": true,
+      "event_type": "weather",
+      "severity": 2,
+      "affects_road_travel": true
+    }
+  },
+  {
+    "id": "chi-boundary",
+    "headline": "Chicago boundary lane closure",
+    "publication_date": "2026-06-08T00:00:00Z",
+    "content": "A lane closed at the edge of the Chicago window.",
+    "classification": {
+      "relevant": true,
+      "event_type": "road_closure",
+      "severity": 1,
+      "affects_road_travel": true
+    }
+  },
+  {
+    "id": "chi-prior",
+    "headline": "Earlier Chicago lane closure",
+    "publication_date": "2026-06-05T09:00:00Z",
+    "content": "Crews closed one Chicago arterial earlier in the month.",
+    "classification": {
+      "relevant": true,
+      "event_type": "road_closure",
+      "severity": 1,
+      "affects_road_travel": true
+    }
+  },
+  {
+    "id": "chi-old",
+    "headline": "Chicago blizzard recap",
+    "publication_date": "2026-05-01T12:00:00Z",
+    "content": "A spring blizzard stranded drivers in Chicago.",
+    "classification": {
+      "relevant": true,
+      "event_type": "weather",
+      "severity": 3,
+      "affects_road_travel": true
+    }
+  },
+  {
+    "id": "chi-future",
+    "headline": "Chicago plans a future parade",
+    "publication_date": "2026-06-20T12:00:00Z",
+    "content": "The city of Chicago announced a parade for next week.",
+    "classification": {
+      "relevant": false,
+      "event_type": "other",
+      "severity": 0,
+      "affects_road_travel": false
+    }
+  },
+  {
+    "id": "dal-crash",
+    "headline": "Dallas freeway pileup",
+    "publication_date": "2026-06-13T08:00:00Z",
+    "content": "A crash blocked I-30 in Dallas, Texas.",
+    "classification": {
+      "relevant": true,
+      "event_type": "accident",
+      "severity": 3,
+      "affects_road_travel": true
+    }
+  },
+  {
+    "id": "hou-port",
+    "headline": "Houston port strike vote",
+    "publication_date": "2026-06-12T10:00:00Z",
+    "content": "Dock workers in Houston scheduled a strike vote.",
+    "classification": {
+      "relevant": true,
+      "event_type": "strike",
+      "severity": 2,
+      "affects_road_travel": true
+    }
+  },
+  {
+    "id": "atl-protest",
+    "headline": "Atlanta protest blocks a downtown street",
+    "publication_date": "2026-06-09T21:00:00Z",
+    "content": "Marchers closed one street in Atlanta for two hours.",
+    "classification": {
+      "relevant": true,
+      "event_type": "protest",
+      "severity": 1,
+      "affects_road_travel": true
+    }
+  }
+]

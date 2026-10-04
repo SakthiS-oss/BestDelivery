@@ -16,3 +16,4 @@ frontend/tsconfig.tsbuildinfo
 
 .DS_Store
 *.log
+data/news_classification_cache.sqlite
