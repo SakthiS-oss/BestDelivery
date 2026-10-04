@@ -1,0 +1,587 @@
+{
+  "disclaimer": "These figures describe a historical replay. Each plan used only hazards and news dated on or before three days before the event. The event itself was not an input. The counts are evidence about those past cases, not a guarantee that a later disruption would be avoided.",
+  "as_of_offset_days": 3,
+  "events_tested": 5,
+  "routes_tested": 25,
+  "routes_through_danger": 25,
+  "routes_avoided": 9,
+  "average_extra_hours": 2.293333333333334,
+  "events": [
+    {
+      "event_id": "okc-tornado",
+      "event_name": "Oklahoma City tornado",
+      "event_start": "2026-06-04T00:00:00Z",
+      "as_of": "2026-06-01T00:00:00Z",
+      "affected_cities": [
+        "Oklahoma City, OK",
+        "Tulsa, OK"
+      ],
+      "routes_tested": 5,
+      "routes_through_danger": 5,
+      "routes_avoided": 2,
+      "average_extra_hours": 1.2550000000000003,
+      "samples": [
+        {
+          "start": "Amarillo, TX",
+          "end": "Dallas, TX",
+          "as_of_date": "2026-06-01",
+          "deadline_date": "2026-06-05",
+          "baseline_cities": [
+            "Amarillo",
+            "Oklahoma City",
+            "Dallas"
+          ],
+          "proposed_cities": [
+            "Amarillo",
+            "Midland",
+            "Dallas"
+          ],
+          "through_danger": true,
+          "avoided": true,
+          "extra_drive_hours": 1.8600000000000003
+        },
+        {
+          "start": "Austin, TX",
+          "end": "Wichita, KS",
+          "as_of_date": "2026-06-01",
+          "deadline_date": "2026-06-05",
+          "baseline_cities": [
+            "Austin",
+            "Oklahoma City",
+            "Wichita"
+          ],
+          "proposed_cities": [
+            "Austin",
+            "Dallas",
+            "Tulsa",
+            "Wichita"
+          ],
+          "through_danger": true,
+          "avoided": true,
+          "extra_drive_hours": 0.6500000000000004
+        },
+        {
+          "start": "Dallas, TX",
+          "end": "Kansas City, MO",
+          "as_of_date": "2026-06-01",
+          "deadline_date": "2026-06-05",
+          "baseline_cities": [
+            "Dallas",
+            "Tulsa",
+            "Kansas City"
+          ],
+          "proposed_cities": [
+            "Dallas",
+            "Tulsa",
+            "Kansas City"
+          ],
+          "through_danger": true,
+          "avoided": false,
+          "extra_drive_hours": 0.0
+        },
+        {
+          "start": "Kansas City, MO",
+          "end": "Little Rock, AR",
+          "as_of_date": "2026-06-01",
+          "deadline_date": "2026-06-05",
+          "baseline_cities": [
+            "Kansas City",
+            "Tulsa",
+            "Little Rock"
+          ],
+          "proposed_cities": [
+            "Kansas City",
+            "Tulsa",
+            "Little Rock"
+          ],
+          "through_danger": true,
+          "avoided": false,
+          "extra_drive_hours": 0.0
+        },
+        {
+          "start": "Little Rock, AR",
+          "end": "Wichita, KS",
+          "as_of_date": "2026-06-01",
+          "deadline_date": "2026-06-05",
+          "baseline_cities": [
+            "Little Rock",
+            "Tulsa",
+            "Wichita"
+          ],
+          "proposed_cities": [
+            "Little Rock",
+            "Tulsa",
+            "Wichita"
+          ],
+          "through_danger": true,
+          "avoided": false,
+          "extra_drive_hours": 0.0
+        }
+      ]
+    },
+    {
+      "event_id": "den-fire",
+      "event_name": "Denver foothills fire",
+      "event_start": "2026-06-09T00:00:00Z",
+      "as_of": "2026-06-06T00:00:00Z",
+      "affected_cities": [
+        "Denver, CO"
+      ],
+      "routes_tested": 5,
+      "routes_through_danger": 5,
+      "routes_avoided": 1,
+      "average_extra_hours": 0.05999999999999872,
+      "samples": [
+        {
+          "start": "Albuquerque, NM",
+          "end": "North Platte, NE",
+          "as_of_date": "2026-06-06",
+          "deadline_date": "2026-06-10",
+          "baseline_cities": [
+            "Albuquerque",
+            "Denver",
+            "North Platte"
+          ],
+          "proposed_cities": [
+            "Albuquerque",
+            "Denver",
+            "North Platte"
+          ],
+          "through_danger": true,
+          "avoided": false,
+          "extra_drive_hours": 0.0
+        },
+        {
+          "start": "Amarillo, TX",
+          "end": "North Platte, NE",
+          "as_of_date": "2026-06-06",
+          "deadline_date": "2026-06-10",
+          "baseline_cities": [
+            "Amarillo",
+            "Denver",
+            "North Platte"
+          ],
+          "proposed_cities": [
+            "Amarillo",
+            "Wichita",
+            "North Platte"
+          ],
+          "through_danger": true,
+          "avoided": true,
+          "extra_drive_hours": 0.05999999999999872
+        },
+        {
+          "start": "North Platte, NE",
+          "end": "Salt Lake City, UT",
+          "as_of_date": "2026-06-06",
+          "deadline_date": "2026-06-10",
+          "baseline_cities": [
+            "North Platte",
+            "Denver",
+            "Salt Lake City"
+          ],
+          "proposed_cities": [
+            "North Platte",
+            "Denver",
+            "Salt Lake City"
+          ],
+          "through_danger": true,
+          "avoided": false,
+          "extra_drive_hours": 0.0
+        },
+        {
+          "start": "Boise, ID",
+          "end": "North Platte, NE",
+          "as_of_date": "2026-06-06",
+          "deadline_date": "2026-06-10",
+          "baseline_cities": [
+            "Boise",
+            "Salt Lake City",
+            "Denver",
+            "North Platte"
+          ],
+          "proposed_cities": [
+            "Boise",
+            "Salt Lake City",
+            "Denver",
+            "North Platte"
+          ],
+          "through_danger": true,
+          "avoided": false,
+          "extra_drive_hours": 0.0
+        },
+        {
+          "start": "Des Moines, IA",
+          "end": "Salt Lake City, UT",
+          "as_of_date": "2026-06-06",
+          "deadline_date": "2026-06-10",
+          "baseline_cities": [
+            "Des Moines",
+            "North Platte",
+            "Denver",
+            "Salt Lake City"
+          ],
+          "proposed_cities": [
+            "Des Moines",
+            "North Platte",
+            "Denver",
+            "Salt Lake City"
+          ],
+          "through_danger": true,
+          "avoided": false,
+          "extra_drive_hours": 0.0
+        }
+      ]
+    },
+    {
+      "event_id": "chi-flood",
+      "event_name": "Chicago River flood",
+      "event_start": "2026-06-10T00:00:00Z",
+      "as_of": "2026-06-07T00:00:00Z",
+      "affected_cities": [
+        "Chicago, IL"
+      ],
+      "routes_tested": 5,
+      "routes_through_danger": 5,
+      "routes_avoided": 5,
+      "average_extra_hours": 3.0620000000000003,
+      "samples": [
+        {
+          "start": "Cincinnati, OH",
+          "end": "Madison, WI",
+          "as_of_date": "2026-06-07",
+          "deadline_date": "2026-06-11",
+          "baseline_cities": [
+            "Cincinnati",
+            "Chicago",
+            "Madison"
+          ],
+          "proposed_cities": [
+            "Cincinnati",
+            "Columbus",
+            "Indianapolis",
+            "Madison"
+          ],
+          "through_danger": true,
+          "avoided": true,
+          "extra_drive_hours": 3.2300000000000004
+        },
+        {
+          "start": "Detroit, MI",
+          "end": "Madison, WI",
+          "as_of_date": "2026-06-07",
+          "deadline_date": "2026-06-11",
+          "baseline_cities": [
+            "Detroit",
+            "Chicago",
+            "Madison"
+          ],
+          "proposed_cities": [
+            "Detroit",
+            "Indianapolis",
+            "Madison"
+          ],
+          "through_danger": true,
+          "avoided": true,
+          "extra_drive_hours": 2.99
+        },
+        {
+          "start": "Bismarck, ND",
+          "end": "Cincinnati, OH",
+          "as_of_date": "2026-06-07",
+          "deadline_date": "2026-06-11",
+          "baseline_cities": [
+            "Bismarck",
+            "Minneapolis",
+            "Chicago",
+            "Cincinnati"
+          ],
+          "proposed_cities": [
+            "Bismarck",
+            "Minneapolis",
+            "Madison",
+            "Indianapolis",
+            "Columbus",
+            "Cincinnati"
+          ],
+          "through_danger": true,
+          "avoided": true,
+          "extra_drive_hours": 3.2300000000000004
+        },
+        {
+          "start": "Buffalo, NY",
+          "end": "Madison, WI",
+          "as_of_date": "2026-06-07",
+          "deadline_date": "2026-06-11",
+          "baseline_cities": [
+            "Buffalo",
+            "Detroit",
+            "Chicago",
+            "Madison"
+          ],
+          "proposed_cities": [
+            "Buffalo",
+            "Cleveland",
+            "Indianapolis",
+            "Madison"
+          ],
+          "through_danger": true,
+          "avoided": true,
+          "extra_drive_hours": 2.629999999999999
+        },
+        {
+          "start": "Charlotte, NC",
+          "end": "Madison, WI",
+          "as_of_date": "2026-06-07",
+          "deadline_date": "2026-06-11",
+          "baseline_cities": [
+            "Charlotte",
+            "Cincinnati",
+            "Chicago",
+            "Madison"
+          ],
+          "proposed_cities": [
+            "Charlotte",
+            "Cincinnati",
+            "Columbus",
+            "Indianapolis",
+            "Madison"
+          ],
+          "through_danger": true,
+          "avoided": true,
+          "extra_drive_hours": 3.230000000000002
+        }
+      ]
+    },
+    {
+      "event_id": "hou-flood",
+      "event_name": "Houston bayou flood",
+      "event_start": "2026-06-11T00:00:00Z",
+      "as_of": "2026-06-08T00:00:00Z",
+      "affected_cities": [
+        "Houston, TX"
+      ],
+      "routes_tested": 5,
+      "routes_through_danger": 5,
+      "routes_avoided": 0,
+      "average_extra_hours": null,
+      "samples": [
+        {
+          "start": "Austin, TX",
+          "end": "New Orleans, LA",
+          "as_of_date": "2026-06-08",
+          "deadline_date": "2026-06-12",
+          "baseline_cities": [
+            "Austin",
+            "Houston",
+            "New Orleans"
+          ],
+          "proposed_cities": [
+            "Austin",
+            "Houston",
+            "New Orleans"
+          ],
+          "through_danger": true,
+          "avoided": false,
+          "extra_drive_hours": 0.0
+        },
+        {
+          "start": "Dallas, TX",
+          "end": "New Orleans, LA",
+          "as_of_date": "2026-06-08",
+          "deadline_date": "2026-06-12",
+          "baseline_cities": [
+            "Dallas",
+            "Houston",
+            "New Orleans"
+          ],
+          "proposed_cities": [
+            "Dallas",
+            "Houston",
+            "New Orleans"
+          ],
+          "through_danger": true,
+          "avoided": false,
+          "extra_drive_hours": 0.0
+        },
+        {
+          "start": "New Orleans, LA",
+          "end": "San Antonio, TX",
+          "as_of_date": "2026-06-08",
+          "deadline_date": "2026-06-12",
+          "baseline_cities": [
+            "New Orleans",
+            "Houston",
+            "San Antonio"
+          ],
+          "proposed_cities": [
+            "New Orleans",
+            "Houston",
+            "San Antonio"
+          ],
+          "through_danger": true,
+          "avoided": false,
+          "extra_drive_hours": 0.0
+        },
+        {
+          "start": "Birmingham, AL",
+          "end": "San Antonio, TX",
+          "as_of_date": "2026-06-08",
+          "deadline_date": "2026-06-12",
+          "baseline_cities": [
+            "Birmingham",
+            "New Orleans",
+            "Houston",
+            "San Antonio"
+          ],
+          "proposed_cities": [
+            "Birmingham",
+            "New Orleans",
+            "Houston",
+            "San Antonio"
+          ],
+          "through_danger": true,
+          "avoided": false,
+          "extra_drive_hours": 0.0
+        },
+        {
+          "start": "Midland, TX",
+          "end": "New Orleans, LA",
+          "as_of_date": "2026-06-08",
+          "deadline_date": "2026-06-12",
+          "baseline_cities": [
+            "Midland",
+            "Austin",
+            "Houston",
+            "New Orleans"
+          ],
+          "proposed_cities": [
+            "Midland",
+            "Austin",
+            "Houston",
+            "New Orleans"
+          ],
+          "through_danger": true,
+          "avoided": false,
+          "extra_drive_hours": 0.0
+        }
+      ]
+    },
+    {
+      "event_id": "chi-far",
+      "event_name": "Green Bay flooding",
+      "event_start": "2026-06-12T00:00:00Z",
+      "as_of": "2026-06-09T00:00:00Z",
+      "affected_cities": [
+        "Madison, WI"
+      ],
+      "routes_tested": 5,
+      "routes_through_danger": 5,
+      "routes_avoided": 1,
+      "average_extra_hours": 2.7600000000000016,
+      "samples": [
+        {
+          "start": "Chicago, IL",
+          "end": "Des Moines, IA",
+          "as_of_date": "2026-06-09",
+          "deadline_date": "2026-06-13",
+          "baseline_cities": [
+            "Chicago",
+            "Madison",
+            "Des Moines"
+          ],
+          "proposed_cities": [
+            "Chicago",
+            "Madison",
+            "Des Moines"
+          ],
+          "through_danger": true,
+          "avoided": false,
+          "extra_drive_hours": 0.0
+        },
+        {
+          "start": "Indianapolis, IN",
+          "end": "Minneapolis, MN",
+          "as_of_date": "2026-06-09",
+          "deadline_date": "2026-06-13",
+          "baseline_cities": [
+            "Indianapolis",
+            "Madison",
+            "Minneapolis"
+          ],
+          "proposed_cities": [
+            "Indianapolis",
+            "Madison",
+            "Minneapolis"
+          ],
+          "through_danger": true,
+          "avoided": false,
+          "extra_drive_hours": 0.0
+        },
+        {
+          "start": "Bismarck, ND",
+          "end": "Indianapolis, IN",
+          "as_of_date": "2026-06-09",
+          "deadline_date": "2026-06-13",
+          "baseline_cities": [
+            "Bismarck",
+            "Minneapolis",
+            "Madison",
+            "Indianapolis"
+          ],
+          "proposed_cities": [
+            "Bismarck",
+            "Minneapolis",
+            "Madison",
+            "Indianapolis"
+          ],
+          "through_danger": true,
+          "avoided": false,
+          "extra_drive_hours": 0.0
+        },
+        {
+          "start": "Cincinnati, OH",
+          "end": "Des Moines, IA",
+          "as_of_date": "2026-06-09",
+          "deadline_date": "2026-06-13",
+          "baseline_cities": [
+            "Cincinnati",
+            "Chicago",
+            "Madison",
+            "Des Moines"
+          ],
+          "proposed_cities": [
+            "Cincinnati",
+            "Nashville",
+            "St. Louis",
+            "Des Moines"
+          ],
+          "through_danger": true,
+          "avoided": true,
+          "extra_drive_hours": 2.7600000000000016
+        },
+        {
+          "start": "Cleveland, OH",
+          "end": "Minneapolis, MN",
+          "as_of_date": "2026-06-09",
+          "deadline_date": "2026-06-13",
+          "baseline_cities": [
+            "Cleveland",
+            "Indianapolis",
+            "Madison",
+            "Minneapolis"
+          ],
+          "proposed_cities": [
+            "Cleveland",
+            "Indianapolis",
+            "Madison",
+            "Minneapolis"
+          ],
+          "through_danger": true,
+          "avoided": false,
+          "extra_drive_hours": 0.0
+        }
+      ]
+    }
+  ]
+}

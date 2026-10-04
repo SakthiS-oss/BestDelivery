@@ -144,3 +144,39 @@ export type HealthResponse = {
   snowflake: string;
   ollama: string;
 };
+
+export type BacktestSample = {
+  start: string;
+  end: string;
+  as_of_date: string;
+  deadline_date: string;
+  baseline_cities: string[];
+  proposed_cities: string[];
+  through_danger: boolean;
+  avoided: boolean;
+  extra_drive_hours: number;
+};
+
+export type BacktestEvent = {
+  event_id: string;
+  event_name: string;
+  event_start: string;
+  as_of: string;
+  affected_cities: string[];
+  routes_tested: number;
+  routes_through_danger: number;
+  routes_avoided: number;
+  average_extra_hours: number | null;
+  samples: BacktestSample[];
+};
+
+export type BacktestReport = {
+  disclaimer: string;
+  as_of_offset_days: number;
+  events_tested: number;
+  routes_tested: number;
+  routes_through_danger: number;
+  routes_avoided: number;
+  average_extra_hours: number | null;
+  events: BacktestEvent[];
+};

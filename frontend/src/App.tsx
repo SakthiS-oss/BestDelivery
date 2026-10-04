@@ -1,9 +1,19 @@
 import { useEffect, useState } from "react";
 
 import { fetchCities, fetchCityRisk, fetchHealth, planDelivery } from "./api/client";
-import type { City, CityOption, CityRiskDetail, HazardEvent, HealthResponse, PlanRequest, PlanResponse } from "./api/types";
+import type {
+  BacktestSample,
+  City,
+  CityOption,
+  CityRiskDetail,
+  HazardEvent,
+  HealthResponse,
+  PlanRequest,
+  PlanResponse,
+} from "./api/types";
+import { BacktestPage } from "./components/BacktestPage";
 import { CityPanel } from "./components/CityPanel";
-import { RouteForm } from "./components/RouteForm";
+import { RouteForm, type ReplaySeed } from "./components/RouteForm";
 import { RouteList } from "./components/RouteList";
 import { RouteMap } from "./components/RouteMap";
 import { cityLabel } from "./display";
@@ -22,6 +32,8 @@ export function App() {
   const [activeCityId, setActiveCityId] = useState<string | null>(null);
   const [cityLoading, setCityLoading] = useState(false);
   const [cityError, setCityError] = useState<string | null>(null);
+  const [view, setView] = useState<"planner" | "backtest">("planner");
+  const [replay, setReplay] = useState<ReplaySeed | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -107,6 +119,18 @@ export function App() {
       .finally(() => setCityLoading(false));
   }
 
+  function onReplay(sample: BacktestSample) {
+    setView("planner");
+    setCompare(true);
+    setReplay({
+      token: Date.now(),
+      start: sample.start,
+      end: sample.end,
+      asOf: sample.as_of_date,
+      deadline: sample.deadline_date,
+    });
+  }
+
   const detail = activeCityId ? riskByCity[activeCityId] ?? null : null;
   const warnings = plan?.warnings ?? [];
 
@@ -125,9 +149,20 @@ export function App() {
       {warnings.length > 0 ? (
         <div className="border-b border-amber-900 bg-amber-950/70 px-4 py-2 text-sm text-amber-100">{warnings.join(" ")}</div>
       ) : null}
+      <div className="flex gap-2 border-b border-zinc-800 px-4 py-2 text-sm">
+        <ViewButton active={view === "planner"} onClick={() => setView("planner")}>
+          Planner
+        </ViewButton>
+        <ViewButton active={view === "backtest"} onClick={() => setView("backtest")}>
+          Backtest
+        </ViewButton>
+      </div>
+      {view === "backtest" ? (
+        <BacktestPage onReplay={onReplay} />
+      ) : (
       <div className="grid min-h-0 flex-1 grid-cols-1 min-[800px]:grid-cols-[240px_minmax(0,1fr)_260px]">
         <aside className="overflow-y-auto border-zinc-800 min-[800px]:border-r">
-          <RouteForm cities={catalog} loading={loading} error={error} onSubmit={onSubmit} />
+          <RouteForm cities={catalog} loading={loading} error={error} replay={replay} onSubmit={onSubmit} />
         </aside>
         <section className="relative min-h-[560px] min-[800px]:min-h-0">
           <RouteMap
@@ -161,7 +196,28 @@ export function App() {
           />
         </aside>
       </div>
+      )}
     </div>
+  );
+}
+
+function ViewButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-md px-2 py-1 ${active ? "bg-zinc-800 text-zinc-100" : "text-zinc-400 hover:text-zinc-200"}`}
+    >
+      {children}
+    </button>
   );
 }
 
