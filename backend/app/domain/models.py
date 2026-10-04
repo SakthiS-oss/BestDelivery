@@ -22,6 +22,7 @@ class City(BaseModel):
     state: str
     lat: float
     lon: float
+    population: int = 0
 
 
 class Hop(BaseModel):

@@ -1,0 +1,168 @@
+from_city,from_state,to_city,to_state,road_miles,typical_drive_hours
+Albuquerque,NM,Amarillo,TX,272.4,4.95
+Albuquerque,NM,Denver,CO,334.3,6.08
+Albuquerque,NM,El Paso,TX,229.8,4.18
+Albuquerque,NM,Phoenix,AZ,329.6,5.99
+Albuquerque,NM,Tucson,AZ,317.7,5.78
+Amarillo,TX,Denver,CO,356.9,6.49
+Amarillo,TX,El Paso,TX,359.1,6.53
+Amarillo,TX,Midland,TX,223.2,4.06
+Amarillo,TX,Oklahoma City,OK,243.8,4.43
+Amarillo,TX,Tulsa,OK,333.9,6.07
+Amarillo,TX,Wichita,KS,302.6,5.50
+Atlanta,GA,Birmingham,AL,140.3,2.55
+Atlanta,GA,Charlotte,NC,226.2,4.11
+Atlanta,GA,Jacksonville,FL,285.2,5.18
+Atlanta,GA,Mobile,AL,300.1,5.46
+Atlanta,GA,Nashville,TN,214.9,3.91
+Austin,TX,Dallas,TX,182.1,3.31
+Austin,TX,Houston,TX,146.2,2.66
+Austin,TX,Midland,TX,282.8,5.14
+Austin,TX,Oklahoma City,OK,359.6,6.54
+Billings,MT,Bismarck,ND,375.0,6.82
+Billings,MT,Missoula,MT,272.6,4.96
+Billings,MT,Salt Lake City,UT,386.6,7.03
+Birmingham,AL,Memphis,TN,216.4,3.93
+Birmingham,AL,Mobile,AL,207.9,3.78
+Birmingham,AL,Nashville,TN,182.7,3.32
+Birmingham,AL,New Orleans,LA,312.2,5.68
+Bismarck,ND,Minneapolis,MN,382.9,6.96
+Bismarck,ND,North Platte,NE,392.8,7.14
+Boise,ID,Missoula,MT,249.3,4.53
+Boise,ID,Portland,OR,344.6,6.27
+Boise,ID,Reno,NV,338.3,6.15
+Boise,ID,Salt Lake City,UT,295.9,5.38
+Boise,ID,Spokane,WA,285.6,5.19
+Boston,MA,Buffalo,NY,399.1,7.26
+Boston,MA,New York,NY,190.2,3.46
+Boston,MA,Philadelphia,PA,270.7,4.92
+Boston,MA,Washington,DC,393.7,7.16
+Buffalo,NY,Cleveland,OH,173.1,3.15
+Buffalo,NY,Detroit,MI,215.3,3.92
+Buffalo,NY,New York,NY,292.4,5.32
+Buffalo,NY,Philadelphia,PA,279.4,5.08
+Buffalo,NY,Pittsburgh,PA,178.6,3.25
+Buffalo,NY,Washington,DC,291.3,5.30
+Charlotte,NC,Cincinnati,OH,335.4,6.10
+Charlotte,NC,Jacksonville,FL,341.5,6.21
+Charlotte,NC,Raleigh,NC,129.8,2.36
+Charlotte,NC,Richmond,VA,247.9,4.51
+Charlotte,NC,Washington,DC,329.6,5.99
+Chicago,IL,Cincinnati,OH,252.2,4.58
+Chicago,IL,Detroit,MI,237.0,4.31
+Chicago,IL,Indianapolis,IN,164.8,3.00
+Chicago,IL,Madison,WI,122.3,2.22
+Chicago,IL,Minneapolis,MN,354.6,6.45
+Chicago,IL,St. Louis,MO,262.3,4.77
+Cincinnati,OH,Cleveland,OH,222.4,4.04
+Cincinnati,OH,Columbus,OH,100.1,1.82
+Cincinnati,OH,Detroit,MI,235.9,4.29
+Cincinnati,OH,Nashville,TN,238.1,4.33
+Cleveland,OH,Columbus,OH,126.3,2.30
+Cleveland,OH,Indianapolis,IN,262.8,4.78
+Cleveland,OH,Pittsburgh,PA,114.9,2.09
+Columbus,OH,Detroit,MI,163.8,2.98
+Columbus,OH,Indianapolis,IN,168.1,3.06
+Columbus,OH,Pittsburgh,PA,161.9,2.94
+Dallas,TX,Houston,TX,224.8,4.09
+Dallas,TX,Little Rock,AR,292.5,5.32
+Dallas,TX,Midland,TX,312.8,5.69
+Dallas,TX,Oklahoma City,OK,190.4,3.46
+Dallas,TX,San Antonio,TX,252.4,4.59
+Dallas,TX,Tulsa,OK,237.8,4.32
+Denver,CO,North Platte,NE,241.9,4.40
+Denver,CO,Salt Lake City,UT,370.6,6.74
+Des Moines,IA,Kansas City,MO,179.0,3.26
+Des Moines,IA,Madison,WI,238.9,4.34
+Des Moines,IA,Minneapolis,MN,235.0,4.27
+Des Moines,IA,North Platte,NE,371.6,6.76
+Des Moines,IA,Omaha,NE,121.8,2.21
+Des Moines,IA,St. Louis,MO,273.1,4.96
+Detroit,MI,Indianapolis,IN,240.1,4.37
+Detroit,MI,Pittsburgh,PA,205.1,3.73
+El Paso,TX,Midland,TX,259.1,4.71
+El Paso,TX,Phoenix,AZ,345.5,6.28
+El Paso,TX,Tucson,AZ,265.0,4.82
+Fresno,CA,Las Vegas,NV,261.2,4.75
+Fresno,CA,Los Angeles,CA,204.9,3.73
+Fresno,CA,Redding,CA,300.7,5.47
+Fresno,CA,Reno,NV,192.9,3.51
+Fresno,CA,Sacramento,CA,157.9,2.87
+Fresno,CA,San Diego,CA,315.3,5.73
+Fresno,CA,San Francisco,CA,161.5,2.94
+Houston,TX,Little Rock,AR,388.6,7.07
+Houston,TX,New Orleans,LA,317.7,5.78
+Houston,TX,San Antonio,TX,189.1,3.44
+Indianapolis,IN,Madison,WI,283.4,5.15
+Indianapolis,IN,Nashville,TN,251.4,4.57
+Indianapolis,IN,St. Louis,MO,230.3,4.19
+Jacksonville,FL,Miami,FL,328.2,5.97
+Jacksonville,FL,Orlando,FL,125.1,2.27
+Jacksonville,FL,Tampa,FL,171.5,3.12
+Kansas City,MO,North Platte,NE,355.5,6.46
+Kansas City,MO,Oklahoma City,OK,298.4,5.43
+Kansas City,MO,Omaha,NE,165.3,3.01
+Kansas City,MO,St. Louis,MO,237.8,4.32
+Kansas City,MO,Tulsa,OK,217.7,3.96
+Kansas City,MO,Wichita,KS,178.1,3.24
+Las Vegas,NV,Los Angeles,CA,228.4,4.15
+Las Vegas,NV,Phoenix,AZ,256.1,4.66
+Las Vegas,NV,Reno,NV,344.7,6.27
+Las Vegas,NV,Sacramento,CA,386.5,7.03
+Las Vegas,NV,Salt Lake City,UT,362.6,6.59
+Las Vegas,NV,San Diego,CA,265.0,4.82
+Las Vegas,NV,Tucson,AZ,361.9,6.58
+Little Rock,AR,Memphis,TN,129.9,2.36
+Little Rock,AR,Mobile,AL,373.2,6.79
+Little Rock,AR,New Orleans,LA,355.7,6.47
+Little Rock,AR,Oklahoma City,OK,299.6,5.45
+Little Rock,AR,St. Louis,MO,292.0,5.31
+Little Rock,AR,Tulsa,OK,230.0,4.18
+Los Angeles,CA,Phoenix,AZ,356.8,6.49
+Los Angeles,CA,Sacramento,CA,361.4,6.57
+Los Angeles,CA,San Diego,CA,111.5,2.03
+Los Angeles,CA,San Francisco,CA,347.4,6.32
+Madison,WI,Minneapolis,MN,232.7,4.23
+Madison,WI,St. Louis,MO,310.0,5.64
+Memphis,TN,Mobile,AL,329.0,5.98
+Memphis,TN,Nashville,TN,196.3,3.57
+Memphis,TN,New Orleans,LA,359.2,6.53
+Memphis,TN,St. Louis,MO,240.4,4.37
+Miami,FL,Orlando,FL,205.3,3.73
+Miami,FL,Tampa,FL,205.8,3.74
+Midland,TX,San Antonio,TX,277.4,5.04
+Minneapolis,MN,Omaha,NE,290.2,5.28
+Missoula,MT,Seattle,WA,394.2,7.17
+Missoula,MT,Spokane,WA,169.8,3.09
+Mobile,AL,New Orleans,LA,131.6,2.39
+Mobile,AL,Tampa,FL,386.0,7.02
+Nashville,TN,St. Louis,MO,253.3,4.61
+New York,NY,Pittsburgh,PA,314.8,5.72
+New York,NY,Richmond,VA,286.0,5.20
+New York,NY,Washington,DC,203.6,3.70
+North Platte,NE,Omaha,NE,251.3,4.57
+North Platte,NE,Wichita,KS,300.0,5.45
+Oklahoma City,OK,Wichita,KS,153.7,2.79
+Omaha,NE,Wichita,KS,257.6,4.68
+Philadelphia,PA,Pittsburgh,PA,257.1,4.68
+Philadelphia,PA,Raleigh,NC,344.9,6.27
+Philadelphia,PA,Richmond,VA,206.7,3.76
+Philadelphia,PA,Washington,DC,123.3,2.24
+Phoenix,AZ,San Diego,CA,298.8,5.43
+Phoenix,AZ,Tucson,AZ,106.0,1.93
+Pittsburgh,PA,Raleigh,NC,330.4,6.01
+Pittsburgh,PA,Richmond,VA,243.0,4.42
+Pittsburgh,PA,Washington,DC,189.7,3.45
+Portland,OR,Redding,CA,340.8,6.20
+Portland,OR,Seattle,WA,145.4,2.64
+Portland,OR,Spokane,WA,290.0,5.27
+Raleigh,NC,Richmond,VA,138.7,2.52
+Raleigh,NC,Washington,DC,233.3,4.24
+Redding,CA,Reno,NV,154.6,2.81
+Redding,CA,Sacramento,CA,146.5,2.66
+Redding,CA,San Francisco,CA,194.3,3.53
+Reno,NV,Sacramento,CA,111.4,2.03
+Reno,NV,San Francisco,CA,185.6,3.38
+San Diego,CA,Tucson,AZ,362.2,6.59
+Seattle,WA,Spokane,WA,228.4,4.15
+Tulsa,OK,Wichita,KS,129.1,2.35
